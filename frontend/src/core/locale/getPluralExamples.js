@@ -2,7 +2,6 @@
 
 import type { Locale } from './actions';
 
-
 /**
  * Return a map of given locale's cldrPlurals and their plural examples.
  *
@@ -17,15 +16,16 @@ import type { Locale } from './actions';
  * @param {Locale} locale A Locale object.
  * @returns {Object} A map of locale's cldrPlurals and their plural examples.
  */
-export default function getPluralExamples(locale: Locale) {
+export default function getPluralExamples(
+    locale: Locale,
+): { [number]: number } {
     const pluralsCount = locale.cldrPlurals.length;
     const examples = {};
 
     if (pluralsCount === 2) {
         examples[locale.cldrPlurals[0]] = 1;
         examples[locale.cldrPlurals[1]] = 2;
-    }
-    else {
+    } else {
         // This variable is used in the pluralRule we eval in the while block.
         let n = 0;
         while (Object.keys(examples).length < pluralsCount) {

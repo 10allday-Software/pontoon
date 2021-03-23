@@ -3,7 +3,6 @@
 import * as React from 'react';
 import { Localized } from '@fluent/react';
 
-
 /**
  * Marks Python new string formatting variables.
  *
@@ -17,16 +16,18 @@ import { Localized } from '@fluent/react';
  *   {foo[42]}
  */
 const pythonFormatString = {
-    rule: /(\{{?[\w\d!.,[\]%:$<>+-= ]*\}?})/,
-    tag: (x: string) => {
-        return <Localized
-            id='placeable-parser-pythonFormatString'
-            attrs={{ title: true }}
-        >
-            <mark className='placeable' title='Python format string'>
-                { x }
-            </mark>
-        </Localized>;
+    rule: (/(\{{?[\w\d!.,[\]%:$<>+-= ]*\}?})/: RegExp),
+    tag: (x: string): React.Element<React.ElementType> => {
+        return (
+            <Localized
+                id='placeable-parser-pythonFormatString'
+                attrs={{ title: true }}
+            >
+                <mark className='placeable' title='Python format string'>
+                    {x}
+                </mark>
+            </Localized>
+        );
     },
 };
 

@@ -11,7 +11,6 @@ BLACK="$(which black)"
 FLAKE8="$(which flake8)"
 NPM="$(which npm)"
 PYTEST="$(which pytest)"
-CODECOV="$(which codecov)"
 
 
 echo ""
@@ -25,8 +24,17 @@ echo "--------------------------------------------------------------------------
 echo "Linting Python code"
 $FLAKE8 pontoon/
 
+
+echo ""
+echo "--------------------------------------------------------------------------------------------"
+echo "Formatting Javascript code"
+npm run check-prettier
+
+
+echo ""
 echo "Linting JavaScript code"
-./node_modules/.bin/eslint .
+npm run eslint
+
 
 echo ""
 echo "--------------------------------------------------------------------------------------------"
@@ -34,10 +42,15 @@ echo "Collecting static files and bundles"
 $WEBPACK_BINARY
 $PYTHON manage.py collectstatic -v0 --noinput
 
+
 echo ""
 echo "--------------------------------------------------------------------------------------------"
 echo "Running JavaScript tests"
 $NPM test
+pushd frontend
+yarn test --watchAll=false
+popd
+
 
 echo ""
 echo "--------------------------------------------------------------------------------------------"

@@ -1,20 +1,21 @@
 /* @flow */
 
-import { Localized } from '@fluent/react';
 import shortid from 'shortid';
-
 
 export const ADD: 'notification/ADD' = 'notification/ADD';
 
-
-export type NotificationType = 'debug' | 'error' | 'info' | 'success' | 'warning';
+export type NotificationType =
+    | 'debug'
+    | 'error'
+    | 'info'
+    | 'success'
+    | 'warning';
 
 export type NotificationMessage = {|
     +type: NotificationType,
-    +content: string | typeof Localized,
+    +content: string | React$Element<any>,
     +key?: string,
 |};
-
 
 /**
  * Add a localized notification to display.
@@ -38,7 +39,6 @@ export function add(message: NotificationMessage): AddAction {
     };
 }
 
-
 /**
  * Add a raw notification to display.
  *
@@ -51,7 +51,6 @@ export function add(message: NotificationMessage): AddAction {
 export function addRaw(content: string, type: NotificationType): AddAction {
     return add({ content, type });
 }
-
 
 export default {
     add,

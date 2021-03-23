@@ -1,13 +1,6 @@
-from __future__ import absolute_import
+from unittest.mock import Mock, MagicMock, patch
 
-from django_nose.tools import (
-    assert_equal,
-    assert_false,
-    assert_not_in,
-    assert_raises,
-    assert_true,
-)
-from mock import Mock, MagicMock, patch
+import pytest
 
 from pontoon.actionlog.models import ActionLog
 from pontoon.base.models import Entity
@@ -24,7 +17,7 @@ class ChangeSetTests(FakeCheckoutTestCase):
     def test_execute_called_once(self):
         """Raise a RuntimeError if execute is called more than once."""
         self.changeset.execute()
-        with assert_raises(RuntimeError):
+        with pytest.raises(RuntimeError):
             self.changeset.execute()
 
     def update_main_vcs_entity(self, **translation_changes):
@@ -44,13 +37,13 @@ class ChangeSetTests(FakeCheckoutTestCase):
         self.main_db_translation.delete()
         self.update_main_db_entity()
         translation = self.main_db_entity.translation_set.all()[0]
-        assert_equal([translation], self.changeset.changed_translations)
+        assert self.changeset.changed_translations == [translation]
 
     def test_changed_translations_no_changes(self):
         """
         If there are no changes, changed_translations should return empty list.
         """
-        assert_equal([], self.changeset.changed_translations)
+        assert self.changeset.changed_translations == []
 
     def test_update_vcs_entity(self):
         """
@@ -60,19 +53,17 @@ class ChangeSetTests(FakeCheckoutTestCase):
         self.other_vcs_resource.save = Mock()
 
         self.update_main_vcs_entity(string="New Translated String")
-        assert_equal(self.main_vcs_translation.strings, {None: "New Translated String"})
+        assert self.main_vcs_translation.strings == {None: "New Translated String"}
 
         # Ensure only resources that were updated are saved.
-        assert_true(self.main_vcs_resource.save.called)
-        assert_false(self.other_vcs_resource.save.called)
+        assert self.main_vcs_resource.save.called
+        assert not self.other_vcs_resource.save.called
 
         # Update the VCS translation with info about the last
         # translation.
-        assert_equal(
-            self.main_vcs_translation.last_updated, self.main_db_translation.date
-        )
-        assert_equal(
-            self.main_vcs_translation.last_translator, self.main_db_translation.user
+        assert self.main_vcs_translation.last_updated == self.main_db_translation.date
+        assert (
+            self.main_vcs_translation.last_translator == self.main_db_translation.user
         )
 
     def test_update_vcs_entity_unapproved(self):
@@ -81,17 +72,17 @@ class ChangeSetTests(FakeCheckoutTestCase):
         translations exist, delete existing ones.
         """
         self.update_main_vcs_entity(approved=False)
-        assert_equal(self.main_vcs_translation.strings, {})
+        assert self.main_vcs_translation.strings == {}
 
     def test_update_vcs_entity_fuzzy(self):
         self.main_vcs_translation.fuzzy = False
         self.update_main_vcs_entity(fuzzy=True)
-        assert_equal(self.main_vcs_translation.fuzzy, True)
+        assert self.main_vcs_translation.fuzzy
 
     def test_update_vcs_entity_not_fuzzy(self):
         self.main_vcs_translation.fuzzy = True
         self.update_main_vcs_entity(fuzzy=False)
-        assert_equal(self.main_vcs_translation.fuzzy, False)
+        assert not self.main_vcs_translation.fuzzy
 
     def test_update_vcs_last_translation_no_translations(self):
         """
@@ -105,16 +96,14 @@ class ChangeSetTests(FakeCheckoutTestCase):
         )
         self.changeset.execute()
 
-        assert_equal(self.main_vcs_translation.last_updated, None)
-        assert_equal(self.main_vcs_translation.last_translator, None)
+        assert self.main_vcs_translation.last_updated is None
+        assert self.main_vcs_translation.last_translator is None
 
     def test_update_vcs_entity_user(self):
         """Track translation authors for use in the commit message."""
         user = UserFactory.create()
         self.update_main_vcs_entity(user=user)
-        assert_equal(
-            self.changeset.commit_authors_per_locale["translated-locale"], [user]
-        )
+        assert self.changeset.commit_authors_per_locale["translated-locale"] == [user]
 
     def test_create_db(self):
         """Create new entity in the database."""
@@ -178,7 +167,7 @@ class ChangeSetTests(FakeCheckoutTestCase):
         self.main_vcs_translation.fuzzy = False
         # The test translation is from a langfile so we can use tags
         # for testing extra.
-        self.main_vcs_translation.tags = set(["ok"])
+        self.main_vcs_translation.tags = {"ok"}
 
         self.update_main_db_entity()
         self.main_db_entity.refresh_from_db()
@@ -205,8 +194,8 @@ class ChangeSetTests(FakeCheckoutTestCase):
 
         # TODO: It'd be nice if we didn't rely on internal changeset
         # attributes to check this, but not vital.
-        assert_not_in(self.main_db_entity, self.changeset.entities_to_update)
-        assert_not_in(self.main_db_translation, self.changeset.translations_to_update)
+        assert self.main_db_entity not in self.changeset.entities_to_update
+        assert self.main_db_translation not in self.changeset.translations_to_update
 
     def test_update_db_approve_translation(self):
         """
@@ -226,7 +215,8 @@ class ChangeSetTests(FakeCheckoutTestCase):
         )
 
         assert ActionLog.objects.filter(
-            action_type="translation:approved", translation=self.main_db_translation.pk,
+            action_type=ActionLog.ActionType.TRANSLATION_APPROVED,
+            translation=self.main_db_translation.pk,
         ).exists()
 
     def test_update_db_dont_approve_fuzzy(self):
@@ -266,7 +256,8 @@ class ChangeSetTests(FakeCheckoutTestCase):
         )
 
         assert ActionLog.objects.filter(
-            action_type="translation:created", translation=translation.pk,
+            action_type=ActionLog.ActionType.TRANSLATION_CREATED,
+            translation=translation.pk,
         ).exists()
 
     def test_update_db_unfuzzy_existing(self):
@@ -309,7 +300,8 @@ class ChangeSetTests(FakeCheckoutTestCase):
         )
 
         assert ActionLog.objects.filter(
-            action_type="translation:rejected", translation=self.main_db_translation.pk,
+            action_type=ActionLog.ActionType.TRANSLATION_REJECTED,
+            translation=self.main_db_translation.pk,
         ).exists()
 
         created_after_translation.refresh_from_db()
@@ -343,7 +335,7 @@ class ChangeSetTests(FakeCheckoutTestCase):
         )
 
         assert ActionLog.objects.filter(
-            action_type="translation:unapproved",
+            action_type=ActionLog.ActionType.TRANSLATION_UNAPPROVED,
             translation=self.main_db_translation.pk,
         ).exists()
 
@@ -360,7 +352,7 @@ class ChangeSetTests(FakeCheckoutTestCase):
 
         self.update_main_db_entity()
         self.main_db_translation.refresh_from_db()
-        assert_not_in(self.main_db_translation, self.changeset.translations_to_update)
+        assert self.main_db_translation not in self.changeset.translations_to_update
 
     def test_update_db_reject_approved(self):
         """
@@ -380,7 +372,8 @@ class ChangeSetTests(FakeCheckoutTestCase):
         )
 
         assert ActionLog.objects.filter(
-            action_type="translation:rejected", translation=self.main_db_translation.pk,
+            action_type=ActionLog.ActionType.TRANSLATION_REJECTED,
+            translation=self.main_db_translation.pk,
         ).exists()
 
     def test_update_db_reject_approved_skip_fuzzy(self):
@@ -406,7 +399,7 @@ class ChangeSetTests(FakeCheckoutTestCase):
         self.changeset.obsolete_db_entity(self.main_db_entity)
         self.changeset.execute()
         self.main_db_entity.refresh_from_db()
-        assert_true(self.main_db_entity.obsolete)
+        assert self.main_db_entity.obsolete
 
     def test_no_new_translations(self):
         """
@@ -531,10 +524,9 @@ class AuthorsTests(FakeCheckoutTestCase):
 
         self.changeset.execute_update_vcs()
 
-        assert_equal(
-            self.changeset.commit_authors_per_locale[self.translated_locale.code],
-            [first_author, second_author],
-        )
+        assert self.changeset.commit_authors_per_locale[
+            self.translated_locale.code
+        ] == [first_author, second_author]
 
     def test_plural_translations(self):
         """
@@ -569,10 +561,9 @@ class AuthorsTests(FakeCheckoutTestCase):
 
         self.changeset.execute_update_vcs()
 
-        assert_equal(
-            set(self.changeset.commit_authors_per_locale[self.translated_locale.code]),
-            {first_author, third_author},
-        )
+        assert set(
+            self.changeset.commit_authors_per_locale[self.translated_locale.code]
+        ) == {first_author, third_author}
 
     def test_multiple_translations(self):
         """
@@ -600,10 +591,9 @@ class AuthorsTests(FakeCheckoutTestCase):
 
         self.changeset.execute_update_vcs()
 
-        assert_equal(
-            self.changeset.commit_authors_per_locale[self.translated_locale.code],
-            [first_author],
-        )
+        assert self.changeset.commit_authors_per_locale[
+            self.translated_locale.code
+        ] == [first_author]
 
     def test_no_translations(self):
         """
@@ -621,7 +611,7 @@ class AuthorsTests(FakeCheckoutTestCase):
                 self.translated_locale, self.main_db_entity, MagicMock()
             )
             self.changeset.execute_update_vcs()
-            assert_equal(
-                self.changeset.commit_authors_per_locale[self.translated_locale.code],
-                [],
+            assert (
+                self.changeset.commit_authors_per_locale[self.translated_locale.code]
+                == []
             )

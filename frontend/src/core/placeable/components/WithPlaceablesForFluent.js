@@ -1,6 +1,7 @@
 /* @flow */
 
 import createMarker from 'react-content-marker';
+import type { Parser } from 'react-content-marker';
 
 import './WithPlaceables.css';
 
@@ -11,9 +12,8 @@ import fluentString from '../parsers/fluentString';
 import fluentTerm from '../parsers/fluentTerm';
 import multipleSpaces from '../parsers/multipleSpaces';
 
-
-export function getRulesWithFluent(rules: Array<Object>) {
-    const newRules = [ ...rules ];
+export function getRulesWithFluent(rules: Array<Parser>): Array<Parser> {
+    const newRules = [...rules];
 
     // Insert after the last space-related rule.
     let insertAfter = newRules.indexOf(multipleSpaces);
@@ -25,7 +25,6 @@ export function getRulesWithFluent(rules: Array<Object>) {
     return newRules;
 }
 
-
 /**
  * Component that marks placeables in a string. Same as WithPlaceables but
  * with all the rules specific to the Fluent syntax at the beginning.
@@ -33,7 +32,6 @@ export function getRulesWithFluent(rules: Array<Object>) {
  * The Fluent rules must come right after the space rules, otherwise it
  * generates a lot of false positives.
  */
-const WithPlaceablesForFluent = createMarker(getRulesWithFluent(rules));
-
+const WithPlaceablesForFluent: any = createMarker(getRulesWithFluent(rules));
 
 export default WithPlaceablesForFluent;

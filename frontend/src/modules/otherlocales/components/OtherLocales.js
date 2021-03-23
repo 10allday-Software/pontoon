@@ -1,6 +1,6 @@
 /* @flow */
 
-import React from 'react';
+import * as React from 'react';
 import { Localized } from '@fluent/react';
 
 import './OtherLocales.css';
@@ -12,74 +12,73 @@ import type { NavigationParams } from 'core/navigation';
 import type { UserState } from 'core/user';
 import type { LocalesState } from '..';
 
-
 type Props = {|
     entity: Entity,
-    isReadOnlyEditor: boolean,
     otherlocales: LocalesState,
     parameters: NavigationParams,
     user: UserState,
-    updateEditorTranslation: (string, string) => void,
 |};
-
 
 /**
  * Shows all translations of an entity in locales other than the current one.
  */
 export default class OtherLocales extends React.Component<Props> {
-    renderNoResults() {
-        return <section className="other-locales">
-            <Localized id="history-history-no-translations">
-                <p>No translations available.</p>
-            </Localized>
-        </section>
+    renderNoResults(): React.Element<'section'> {
+        return (
+            <section className='other-locales'>
+                <Localized id='history-history-no-translations'>
+                    <p>No translations available.</p>
+                </Localized>
+            </section>
+        );
     }
 
     renderTranslations(
         translation: OtherLocaleTranslation,
         index: number,
-    ) {
-        return <Translation
-            entity={ this.props.entity }
-            isReadOnlyEditor={ this.props.isReadOnlyEditor }
-            translation={ translation }
-            parameters={ this.props.parameters }
-            updateEditorTranslation={ this.props.updateEditorTranslation }
-            key={ index }
-        />;
+    ): React.Element<React.ElementType> {
+        return (
+            <Translation
+                index={index}
+                entity={this.props.entity}
+                translation={translation}
+                parameters={this.props.parameters}
+                key={index}
+            />
+        );
     }
 
-    render() {
+    render(): null | React.Element<'section'> {
         const { otherlocales } = this.props;
 
-        if (otherlocales.fetching || !otherlocales.translations) {
+        if (otherlocales.fetching) {
             return null;
         }
 
         const translations = otherlocales.translations;
 
-        if (!translations.other.length && !translations.preferred.length) {
+        if (!translations.length) {
             return this.renderNoResults();
         }
 
-        return <section className="other-locales">
-            <ul className="preferred-list">
-                { translations.preferred.map((translation, index) => {
-                    return this.renderTranslations(
-                        translation,
-                        index,
-                    );
-                }) }
-            </ul>
+        return (
+            <section className='other-locales'>
+                <ul className='preferred-list'>
+                    {translations.map((translation, index) =>
+                        translation.is_preferred
+                            ? this.renderTranslations(translation, index)
+                            : null,
+                    )}
+                </ul>
 
-            <ul>
-                { translations.other.map((translation, index) => {
-                    return this.renderTranslations(
-                        translation,
-                        index,
-                    );
-                }) }
-            </ul>
-        </section>;
+                <ul>
+                    {translations.map((translation, index) =>
+                        !translation.is_preferred
+                            ? this.renderTranslations(translation, index)
+                            : null,
+                    )}
+                </ul>
+            </section>
+        );
     }
 }

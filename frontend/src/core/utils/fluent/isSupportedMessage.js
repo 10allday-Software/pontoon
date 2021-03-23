@@ -2,14 +2,13 @@
 
 import areSupportedElements from './areSupportedElements';
 
-
 /**
  * Return true when message represents a message, supported in rich FTL editor.
  *
  * Message is supported if it's valid and all value elements
  * and all attribute elements are supported.
  */
-export default function isSupportedMessage(message: Object) {
+export default function isSupportedMessage(message: Object): boolean {
     // Parse error
     if (message.type === 'Junk') {
         return false;
@@ -19,7 +18,9 @@ export default function isSupportedMessage(message: Object) {
         return false;
     }
 
-    return message.attributes.every(attribute => {
-        return attribute.value && areSupportedElements(attribute.value.elements);
+    return message.attributes.every((attribute) => {
+        return (
+            attribute.value && areSupportedElements(attribute.value.elements)
+        );
     });
 }

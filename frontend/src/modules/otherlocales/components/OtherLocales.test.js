@@ -3,42 +3,38 @@ import { shallow } from 'enzyme';
 
 import OtherLocales from './OtherLocales';
 
-
 describe('<OtherLocales>', () => {
     it('shows the correct number of translations', () => {
         const otherlocales = {
-            translations: {
-                preferred: [],
-                other: [
-                    {
-                        'locale': {
-                            code: 'ar',
-                        },
+            translations: [
+                {
+                    locale: {
+                        code: 'ar',
                     },
-                    {
-                        'locale': {
-                            code: 'br',
-                        },
+                },
+                {
+                    locale: {
+                        code: 'br',
                     },
-                    {
-                        'locale': {
-                            code: 'cr',
-                        },
+                },
+                {
+                    locale: {
+                        code: 'cr',
                     },
-                ],
-            },
+                },
+            ],
         };
         const params = {
             locale: 'kg',
             project: 'tmo',
         };
-        const user = {}
+        const user = {};
         const wrapper = shallow(
             <OtherLocales
-                otherlocales={ otherlocales }
-                parameters={ params }
-                user={ user }
-            />
+                otherlocales={otherlocales}
+                parameters={params}
+                user={user}
+            />,
         );
 
         expect(wrapper.find('Translation')).toHaveLength(3);
@@ -48,11 +44,10 @@ describe('<OtherLocales>', () => {
         const otherlocales = {
             fetching: true,
         };
-        const user = {}
-        const wrapper = shallow(<OtherLocales
-            otherlocales={ otherlocales }
-            user={ user }
-        />);
+        const user = {};
+        const wrapper = shallow(
+            <OtherLocales otherlocales={otherlocales} user={user} />,
+        );
 
         expect(wrapper.type()).toBeNull();
     });
@@ -60,17 +55,15 @@ describe('<OtherLocales>', () => {
     it('renders a no results message if otherlocales is empty', () => {
         const otherlocales = {
             fetching: false,
-            translations: {
-                preferred: [],
-                other: [],
-            },
+            translations: [],
         };
-        const user = {}
-        const wrapper = shallow(<OtherLocales
-            otherlocales={ otherlocales }
-            user={ user }
-        />);
+        const user = {};
+        const wrapper = shallow(
+            <OtherLocales otherlocales={otherlocales} user={user} />,
+        );
 
-        expect(wrapper.find('#history-history-no-translations')).toHaveLength(1);
+        expect(wrapper.find('#history-history-no-translations')).toHaveLength(
+            1,
+        );
     });
 });

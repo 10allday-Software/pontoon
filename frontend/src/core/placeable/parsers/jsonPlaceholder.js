@@ -3,7 +3,6 @@
 import * as React from 'react';
 import { Localized } from '@fluent/react';
 
-
 /**
  * Marks JSON format placeholders as user by the WebExtension API.
  *
@@ -16,16 +15,18 @@ import { Localized } from '@fluent/react';
  *   $FIRST_NAME$
  */
 const jsonPlaceholder = {
-    rule: /(\$[A-Z0-9_]+\$)/,
-    tag: (x: string) => {
-        return <Localized
-            id='placeable-parser-jsonPlaceholder'
-            attrs={{ title: true }}
-        >
-            <mark className='placeable' title='JSON placeholder'>
-                { x }
-            </mark>
-        </Localized>;
+    rule: (/(\$[A-Z0-9_]+\$)/: RegExp),
+    tag: (x: string): React.Element<React.ElementType> => {
+        return (
+            <Localized
+                id='placeable-parser-jsonPlaceholder'
+                attrs={{ title: true }}
+            >
+                <mark className='placeable' title='JSON placeholder'>
+                    {x}
+                </mark>
+            </Localized>
+        );
     },
 };
 

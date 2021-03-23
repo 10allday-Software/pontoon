@@ -5,7 +5,6 @@ import * as React from 'react';
 import FluentTranslation from './FluentTranslation';
 import GenericTranslation from './GenericTranslation';
 
-
 type Props = {|
     content: ?string,
     diffTarget?: ?string,
@@ -13,9 +12,8 @@ type Props = {|
     search?: ?string,
 |};
 
-
 export default class TranslationProxy extends React.Component<Props> {
-    render() {
+    render(): null | React.Element<React.ElementType> {
         const { content, diffTarget, format, search } = this.props;
 
         if (!content) {
@@ -23,17 +21,21 @@ export default class TranslationProxy extends React.Component<Props> {
         }
 
         if (format === 'ftl') {
-            return <FluentTranslation
-                content={ content }
-                diffTarget={ diffTarget }
-                search={ search }
-            />;
+            return (
+                <FluentTranslation
+                    content={content}
+                    diffTarget={diffTarget}
+                    search={search}
+                />
+            );
         }
 
-        return <GenericTranslation
-            content={ content }
-            diffTarget={ diffTarget }
-            search={ search }
-        />;
+        return (
+            <GenericTranslation
+                content={content}
+                diffTarget={diffTarget}
+                search={search}
+            />
+        );
     }
 }

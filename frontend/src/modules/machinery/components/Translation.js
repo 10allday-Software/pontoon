@@ -1,27 +1,26 @@
 /* @flow */
 
-import React from 'react';
+import * as React from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Localized } from '@fluent/react';
 
+import './ConcordanceSearch.css';
 import './Translation.css';
 
+import * as editor from 'core/editor';
+import * as entities from 'core/entities';
 import { GenericTranslation } from 'core/translation';
 
-import type { MachineryTranslation, SourceType } from 'core/api';
-import type { Locale } from 'core/locale';
-
+import ConcordanceSearch from './ConcordanceSearch';
 import TranslationSource from './TranslationSource';
 
+import type { MachineryTranslation } from 'core/api';
 
 type Props = {|
-    isReadOnlyEditor: boolean,
-    locale: Locale,
     sourceString: string,
     translation: MachineryTranslation,
-    updateEditorTranslation: (string, string) => void,
-    updateMachinerySources: (Array<SourceType>, string) => void,
+    index: number,
 |};
-
 
 /**
  * Render a Translation in the Machinery tab.
@@ -30,76 +29,107 @@ type Props = {|
  * Similar translations (same original and translation) are shown only once
  * and their sources are merged.
  */
-export default class Translation extends React.Component<Props> {
-    copyTranslationIntoEditor = () => {
-        if (this.props.isReadOnlyEditor) {
-            return;
-        }
+export default function Translation(
+    props: Props,
+): React.Element<React.ElementType> {
+    const { index, sourceString, translation } = props;
 
-        // Ignore if selecting text
-        if (window.getSelection().toString()) {
-            return;
-        }
+    const dispatch = useDispatch();
+    const isReadOnlyEditor = useSelector((state) =>
+        entities.selectors.isReadOnlyEditor(state),
+    );
+    const locale = useSelector((state) => state.locale);
 
-        const { translation, sources } = this.props.translation;
-        this.props.updateEditorTranslation(translation, 'machinery');
-        this.props.updateMachinerySources(sources, translation);
-    };
+    const copyMachineryTranslation = editor.useCopyMachineryTranslation();
+    const copyTranslationIntoEditor = React.useCallback(() => {
+        dispatch(editor.actions.selectHelperElementIndex(index));
+        copyMachineryTranslation(translation);
+    }, [dispatch, index, translation, copyMachineryTranslation]);
 
-    render() {
-        const { locale, sourceString, translation, isReadOnlyEditor } = this.props;
-
-        const types = translation.sources;
-
-        let className = 'translation';
-
-        if (isReadOnlyEditor) {
-            // Copying into the editor is not allowed
-            className += ' cannot-copy';
-        }
-
-        return <Localized id="machinery-Translation--copy" attrs={{ title: true }}>
-            <li
-                className={ className }
-                title="Copy Into Translation"
-                onClick={ this.copyTranslationIntoEditor }
-            >
-                <header>
-                    { !translation.quality ? null :
-                        <span className="quality">{ translation.quality + '%' }</span>
-                    }
-                    <TranslationSource
-                        translation={ translation }
-                        locale={ locale }
-                    />
-                </header>
-                <p className="original">
-                    { types.indexOf('caighdean') === -1 ?
-                        <GenericTranslation
-                            content={ translation.original }
-                            diffTarget={ sourceString }
-                        />
-                    :
-                        /*
-                         * Caighdean takes `gd` translations as input, so we shouldn't
-                         * diff it against the `en-US` source string.
-                         */
-                         <GenericTranslation
-                             content= { translation.original }
-                         />
-                    }
-                </p>
-                <p
-                    className="suggestion"
-                    dir={ locale.direction }
-                    data-script={ locale.script }
-                    lang={ locale.code }
-                >
-                    <GenericTranslation
-                        content={ translation.translation }
-                    />
-                </p>
-            </li>
-        </Localized>;
+    let className = 'translation';
+    if (isReadOnlyEditor) {
+        // Copying into the editor is not allowed
+        className += ' cannot-copy';
     }
+
+    const selectedHelperElementIndex = useSelector(
+        (state) => state[editor.NAME].selectedHelperElementIndex,
+    );
+    const changeSource = useSelector(
+        (state) => state[editor.NAME].changeSource,
+    );
+    const isSelected =
+        changeSource === 'machinery' && selectedHelperElementIndex === index;
+    if (isSelected) {
+        // Highlight Machinery entries upon selection
+        className += ' selected';
+    }
+
+    const translationRef = React.useRef();
+    React.useEffect(() => {
+        if (selectedHelperElementIndex === index && translationRef.current) {
+            translationRef.current.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest',
+            });
+        }
+    }, [selectedHelperElementIndex, index]);
+
+    return (
+        <Localized id='machinery-Translation--copy' attrs={{ title: true }}>
+            <li
+                className={className}
+                title='Copy Into Translation (Ctrl + Shift + Down)'
+                onClick={copyTranslationIntoEditor}
+                ref={translationRef}
+            >
+                {translation.sources.includes('concordance-search') ? (
+                    <ConcordanceSearch
+                        sourceString={sourceString}
+                        translation={translation}
+                    />
+                ) : (
+                    <>
+                        <header>
+                            {translation.quality && (
+                                <span className='quality'>
+                                    {translation.quality + '%'}
+                                </span>
+                            )}
+                            <TranslationSource
+                                translation={translation}
+                                locale={locale}
+                            />
+                        </header>
+                        <p className='original'>
+                            {translation.sources.indexOf('caighdean') === -1 ? (
+                                <GenericTranslation
+                                    content={translation.original}
+                                    diffTarget={sourceString}
+                                />
+                            ) : (
+                                /*
+                                 * Caighdean takes `gd` translations as input, so we shouldn't
+                                 * diff it against the `en-US` source string.
+                                 */
+                                <GenericTranslation
+                                    content={translation.original}
+                                />
+                            )}
+                        </p>
+                        <p
+                            className='suggestion'
+                            dir={locale.direction}
+                            data-script={locale.script}
+                            lang={locale.code}
+                        >
+                            <GenericTranslation
+                                content={translation.translation}
+                            />
+                        </p>
+                    </>
+                )}
+            </li>
+        </Localized>
+    );
 }

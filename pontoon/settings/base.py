@@ -1,6 +1,4 @@
 """Django settings for Pontoon."""
-from __future__ import absolute_import
-
 import re
 import os
 import socket
@@ -96,6 +94,11 @@ GOOGLE_TRANSLATE_API_KEY = os.environ.get("GOOGLE_TRANSLATE_API_KEY", "")
 # Microsoft Translator API Key
 MICROSOFT_TRANSLATOR_API_KEY = os.environ.get("MICROSOFT_TRANSLATOR_API_KEY", "")
 
+# SYSTRAN Translate Settings
+SYSTRAN_TRANSLATE_API_KEY = os.environ.get("SYSTRAN_TRANSLATE_API_KEY", "")
+SYSTRAN_TRANSLATE_SERVER = os.environ.get("SYSTRAN_TRANSLATE_SERVER", "")
+SYSTRAN_TRANSLATE_PROFILE_OWNER = os.environ.get("SYSTRAN_TRANSLATE_PROFILE_OWNER", "")
+
 # Google Analytics Key
 GOOGLE_ANALYTICS_KEY = os.environ.get("GOOGLE_ANALYTICS_KEY", "")
 
@@ -103,11 +106,15 @@ GOOGLE_ANALYTICS_KEY = os.environ.get("GOOGLE_ANALYTICS_KEY", "")
 RAYGUN4PY_CONFIG = {"api_key": os.environ.get("RAYGUN_APIKEY", "")}
 
 # Email settings
-EMAIL_HOST_USER = os.environ.get("SENDGRID_USERNAME", "")
-EMAIL_HOST = "smtp.sendgrid.net"
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_PASSWORD = os.environ.get("SENDGRID_PASSWORD", "")
+EMAIL_HOST_USER = os.environ.get(
+    "EMAIL_HOST_USER", os.environ.get("SENDGRID_USERNAME", "apikey")
+)
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.sendgrid.net")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") != "False"
+EMAIL_HOST_PASSWORD = os.environ.get(
+    "EMAIL_HOST_PASSWORD", os.environ.get("SENDGRID_PASSWORD", "")
+)
 
 # Log emails to console if the SendGrid credentials are missing.
 if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
@@ -126,6 +133,7 @@ INSTALLED_APPS = (
     "pontoon.contributors",
     "pontoon.checks",
     "pontoon.in_context",
+    "pontoon.insights",
     "pontoon.localizations",
     "pontoon.machinery",
     "pontoon.projects",
@@ -149,9 +157,7 @@ INSTALLED_APPS = (
     "django.contrib.sites",
     # Third-party apps, patches, fixes
     "django_jinja",
-    "django_nose",
     "pipeline",
-    "session_csrf",
     "guardian",
     "corsheaders",
     "allauth",
@@ -179,7 +185,7 @@ MIDDLEWARE = (
     "django.middleware.common.CommonMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "session_csrf.CsrfMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "csp.middleware.CSPMiddleware",
@@ -191,7 +197,6 @@ CONTEXT_PROCESSORS = (
     "django.template.context_processors.debug",
     "django.template.context_processors.media",
     "django.template.context_processors.request",
-    "session_csrf.context_processor",
     "django.contrib.messages.context_processors.messages",
     "pontoon.base.context_processors.globals",
 )
@@ -260,9 +265,6 @@ AUTHENTICATION_BACKENDS = [
     "guardian.backends.ObjectPermissionBackend",
 ]
 
-# This variable is required by django-guardian.
-# App supports giving permissions for anonymous users.
-ANONYMOUS_USER_ID = -1
 GUARDIAN_RAISE_403 = True
 
 PIPELINE_CSS = {
@@ -302,6 +304,7 @@ PIPELINE_CSS = {
             "css/contributors.css",
             "css/heading_info.css",
             "css/info.css",
+            "css/download_selector.css",
         ),
         "output_filename": "css/localization.min.css",
     },
@@ -313,11 +316,13 @@ PIPELINE_CSS = {
         "source_filenames": (
             "css/table.css",
             "css/double_list_selector.css",
+            "css/download_selector.css",
             "css/contributors.css",
             "css/heading_info.css",
             "css/team.css",
-            "css/info.css",
             "css/request.css",
+            "css/insights.css",
+            "css/info.css",
         ),
         "output_filename": "css/team.min.css",
     },
@@ -367,7 +372,7 @@ PIPELINE_CSS = {
         "output_filename": "css/terms.min.css",
     },
     "homepage": {
-        "source_filenames": ("css/fullpage.css", "css/homepage.css",),
+        "source_filenames": ("css/homepage.css",),
         "output_filename": "css/homepage.min.css",
     },
 }
@@ -422,6 +427,7 @@ PIPELINE_JS = {
     },
     "team": {
         "source_filenames": (
+            "js/lib/Chart.bundle.js",
             "js/table.js",
             "js/progress-chart.js",
             "js/double_list_selector.js",
@@ -429,6 +435,7 @@ PIPELINE_JS = {
             "js/tabs.js",
             "js/request.js",
             "js/permissions.js",
+            "js/insights.js",
             "js/info.js",
         ),
         "output_filename": "js/team.min.js",
@@ -464,7 +471,7 @@ PIPELINE_JS = {
         "output_filename": "js/machinery.min.js",
     },
     "homepage": {
-        "source_filenames": ("js/lib/fullpage.js", "js/homepage.js"),
+        "source_filenames": ("js/homepage.js",),
         "output_filename": "js/homepage.min.js",
     },
 }
@@ -472,11 +479,12 @@ PIPELINE_JS = {
 PIPELINE = {
     "STYLESHEETS": PIPELINE_CSS,
     "JAVASCRIPT": PIPELINE_JS,
+    "JS_COMPRESSOR": "pipeline.compressors.terser.TerserCompressor",
+    "CSS_COMPRESSOR": "pipeline.compressors.NoopCompressor",
     "YUGLIFY_BINARY": path(
         os.environ.get("YUGLIFY_BINARY", "node_modules/.bin/yuglify")
     ),
-    "BABEL_BINARY": path("node_modules/.bin/babel"),
-    "BABEL_ARGUMENTS": "--modules ignore",
+    "TERSER_BINARY": path(os.environ.get("TERSER_BINARY", "node_modules/.bin/terser")),
     "DISABLE_WRAPPER": True,
 }
 
@@ -503,7 +511,7 @@ SITE_ID = 1
 
 # Absolute path to the directory that holds media.
 # Example: "/home/media/media.lawrence.com/"
-MEDIA_ROOT = path("media")
+MEDIA_ROOT = os.environ.get("MEDIA_ROOT", path("media"))
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).
@@ -528,8 +536,8 @@ STATICFILES_DIRS = [
 
 # Set ALLOWED_HOSTS based on SITE_URL setting.
 def _allowed_hosts():
+    from urllib.parse import urlparse
     from django.conf import settings
-    from six.moves.urllib.parse import urlparse
 
     host = urlparse(settings.SITE_URL).netloc  # Remove protocol and path
     result = [host]
@@ -589,17 +597,6 @@ if os.environ.get("DJANGO_SQL_LOG", False):
         "handlers": ["console"],
     }
 
-# Tests
-TEST_RUNNER = "django_nose.NoseTestSuiteRunner"
-NOSE_ARGS = [
-    "--logging-filter=-factory,-django.db,-raygun4py",
-    "--logging-clear-handlers",
-]
-
-# Disable nose-progressive on CI due to ugly output.
-if not os.environ.get("CI", False):
-    NOSE_ARGS.append("--with-progressive")
-
 # General auth settings
 LOGIN_URL = "/"
 LOGIN_REDIRECT_URL = "/"
@@ -610,8 +607,8 @@ LOGIN_REDIRECT_URL_FAILURE = "/"
 # everything.
 ENGAGE_ROBOTS = False
 
-# Always generate a CSRF token for anonymous users.
-ANON_ALWAYS = True
+# Store the CSRF token in the user's session instead of in a cookie.
+CSRF_USE_SESSIONS = True
 
 # Set X-Frame-Options to DENY by default on all responses.
 X_FRAME_OPTIONS = "DENY"
@@ -636,8 +633,8 @@ SECURE_SSL_REDIRECT = not (DEBUG or os.environ.get("CI", False))
 
 # Content-Security-Policy headers
 CSP_DEFAULT_SRC = ("'none'",)
-CSP_CHILD_SRC = ("https:",)
-CSP_FRAME_SRC = ("https:",)  # Older browsers
+CSP_FRAME_SRC = ("https:",)
+CSP_WORKER_SRC = ("https:",)
 CSP_CONNECT_SRC = (
     "'self'",
     "https://bugzilla.mozilla.org/rest/bug",
@@ -668,12 +665,12 @@ CSP_STYLE_SRC = (
 # Needed if site not hosted on HTTPS domains (like local setup)
 if not (HEROKU_DEMO or SITE_URL.startswith("https")):
     CSP_IMG_SRC = CSP_IMG_SRC + ("http://www.gravatar.com/avatar/",)
-    CSP_CHILD_SRC = CSP_FRAME_SRC = CSP_FRAME_SRC + ("http:",)
+    CSP_WORKER_SRC = CSP_FRAME_SRC = CSP_FRAME_SRC + ("http:",)
 
 # For absolute urls
 try:
     DOMAIN = socket.gethostname()
-except socket.error:
+except OSError:
     DOMAIN = "localhost"
 PROTOCOL = "http://"
 PORT = 80
@@ -706,6 +703,10 @@ USE_L10N = False
 # Enable Bugs tab on the team pages, pulling data from bugzilla.mozilla.org.
 # See bug 1567402 for details. A Mozilla-specific variable.
 ENABLE_BUGS_TAB = os.environ.get("ENABLE_BUGS_TAB", "False") != "False"
+
+# Enable Insights tab on the team pages, which presents data that needs to be
+# collected by a scheduled job. See docs/admin/deployment.rst for more information.
+ENABLE_INSIGHTS_TAB = os.environ.get("ENABLE_INSIGHTS_TAB", "False") != "False"
 
 # Bleach tags and attributes
 ALLOWED_TAGS = [
@@ -745,7 +746,7 @@ except ValueError:
 
 SYNC_LOG_RETENTION = 90  # days
 
-MANUAL_SYNC = os.environ.get("MANUAL_SYNC", "False") != "False"
+MANUAL_SYNC = os.environ.get("MANUAL_SYNC", "True") != "False"
 
 # Celery
 
@@ -773,7 +774,7 @@ CELERY_ACCEPT_CONTENT = ["pickle"]
 # For the sake of integration with other sites,
 # some of javascript files (e.g. pontoon.js)
 # require Access-Control-Allow-Origin header to be set as '*'.
-CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_URLS_REGEX = r"^/(pontoon\.js|graphql/?)$"
 
 SOCIALACCOUNT_ENABLED = True
@@ -840,3 +841,6 @@ DJANGO_NOTIFICATIONS_CONFIG = {
 
 # Maximum number of read notifications to display in the notifications menu
 NOTIFICATIONS_MAX_COUNT = 7
+
+# Number of events displayed on the Contributor's timeline per page.
+CONTRIBUTORS_TIMELINE_EVENTS_PER_PAGE = 10

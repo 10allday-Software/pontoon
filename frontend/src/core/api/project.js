@@ -2,9 +2,8 @@
 
 import APIBase from './base';
 
-
 export default class ProjectAPI extends APIBase {
-    async get(slug: string) {
+    async get(slug: string): Promise<any> {
         const query = `{
             project(slug: "${slug}") {
                 slug
@@ -24,6 +23,6 @@ export default class ProjectAPI extends APIBase {
         const headers = new Headers();
         headers.append('X-Requested-With', 'XMLHttpRequest');
 
-        return await this.fetch('/graphql/', 'GET', payload, headers);
+        return await this.fetch('/graphql', 'GET', payload, headers);
     }
 }

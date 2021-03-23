@@ -1,15 +1,25 @@
 /* @flow */
 
-import { ADD_TRANSLATIONS, RESET } from './actions';
+import {
+    CONCORDANCE_SEARCH,
+    ADD_TRANSLATIONS,
+    REQUEST,
+    RESET,
+} from './actions';
 
 import type { MachineryTranslation } from 'core/api';
-import type { AddTranslationsAction, ResetAction } from './actions';
-
+import type {
+    ConcordanceSearchAction,
+    AddTranslationsAction,
+    RequestAction,
+    ResetAction,
+} from './actions';
 
 type Action =
+    | ConcordanceSearchAction
     | AddTranslationsAction
-    | ResetAction
-;
+    | RequestAction
+    | ResetAction;
 
 type Translations = Array<MachineryTranslation>;
 
@@ -17,8 +27,10 @@ export type MachineryState = {|
     entity: ?number,
     sourceString: string,
     translations: Translations,
+    searchResults: Translations,
+    fetching: boolean,
+    hasMore?: boolean,
 |};
-
 
 /**
  * Return a list of translations that are deduplicated and sorted.
@@ -32,13 +44,15 @@ export type MachineryState = {|
  */
 function dedupedTranslations(
     oldTranslations: Translations,
-    newTranslations: Translations
+    newTranslations: Translations,
 ): Translations {
-    const translations = oldTranslations.map(item => ({ ...item }));
+    const translations = oldTranslations.map((item) => ({ ...item }));
 
-    newTranslations.forEach(newT => {
+    newTranslations.forEach((newT) => {
         const sameTranslation = translations.findIndex(
-            oldT => newT.original === oldT.original && newT.translation === oldT.translation
+            (oldT) =>
+                newT.original === oldT.original &&
+                newT.translation === oldT.translation,
         );
 
         if (sameTranslation >= 0) {
@@ -47,13 +61,15 @@ function dedupedTranslations(
             if (newT.quality && !translations[sameTranslation].quality) {
                 translations[sameTranslation].quality = newT.quality;
             }
-        }
-        else {
+        } else {
             translations.push({ ...newT });
         }
     });
 
     return translations.sort((a, b) => {
+        if (!a.quality && !b.quality) {
+            return 1;
+        }
         if (!a.quality && b.quality) {
             return 1;
         }
@@ -72,11 +88,13 @@ function dedupedTranslations(
     });
 }
 
-
 const initial: MachineryState = {
     entity: null,
     sourceString: '',
     translations: [],
+    searchResults: [],
+    fetching: false,
+    hasMore: false,
 };
 
 export default function reducer(
@@ -84,6 +102,16 @@ export default function reducer(
     action: Action,
 ): MachineryState {
     switch (action.type) {
+        case CONCORDANCE_SEARCH:
+            return {
+                ...state,
+                searchResults: [
+                    ...state.searchResults,
+                    ...action.searchResults,
+                ],
+                fetching: false,
+                hasMore: action.hasMore,
+            };
         case ADD_TRANSLATIONS:
             return {
                 ...state,
@@ -92,12 +120,20 @@ export default function reducer(
                     action.translations,
                 ),
             };
+        case REQUEST:
+            return {
+                ...state,
+                fetching: true,
+                hasMore: false,
+            };
         case RESET:
             return {
                 ...state,
                 entity: action.entity,
                 sourceString: action.sourceString,
                 translations: [],
+                searchResults: [],
+                hasMore: false,
             };
         default:
             return state;

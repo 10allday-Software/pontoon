@@ -17,11 +17,10 @@ type Props = {|
     navigateToPath: (string) => void,
 |};
 
-
 /**
  * Shows all terms found in the source string.
  */
-export default function Terms(props: Props) {
+export default function Terms(props: Props): null | React.Element<'section'> {
     let { terms } = props;
 
     if (terms.fetching || !terms.terms) {
@@ -30,19 +29,23 @@ export default function Terms(props: Props) {
 
     terms = terms.terms;
 
-    return <section className="terms">
-        { !terms.length ?
-            <Localized id="entitydetails-Helpers--no-terms">
-                <p className="no-terms">No terms available.</p>
-            </Localized>
-            :
-            <TermsList
-                isReadOnlyEditor={ props.isReadOnlyEditor }
-                locale={ props.locale }
-                terms={ terms }
-                addTextToEditorTranslation={ props.addTextToEditorTranslation }
-                navigateToPath={ props.navigateToPath }
-            />
-        }
-    </section>;
+    return (
+        <section className='terms'>
+            {!terms.length ? (
+                <Localized id='entitydetails-Helpers--no-terms'>
+                    <p className='no-terms'>No terms available.</p>
+                </Localized>
+            ) : (
+                <TermsList
+                    isReadOnlyEditor={props.isReadOnlyEditor}
+                    locale={props.locale}
+                    terms={terms}
+                    addTextToEditorTranslation={
+                        props.addTextToEditorTranslation
+                    }
+                    navigateToPath={props.navigateToPath}
+                />
+            )}
+        </section>
+    );
 }

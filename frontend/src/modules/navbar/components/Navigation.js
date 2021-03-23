@@ -1,7 +1,7 @@
 /* @flow */
 
 import * as React from 'react';
-import { connect } from 'react-redux';
+import { useDispatch, useSelector, useStore } from 'react-redux';
 import { push } from 'connected-react-router';
 
 import './Navigation.css';
@@ -12,27 +12,23 @@ import * as project from 'core/project';
 import * as resource from 'core/resource';
 import * as unsavedchanges from 'modules/unsavedchanges';
 
-
-import type { Locale } from 'core/locale';
+import type { LocaleState } from 'core/locale';
 import type { NavigationParams } from 'core/navigation';
 import type { ProjectState } from 'core/project';
 import type { ResourcesState } from 'core/resource';
-import type { UnsavedChangesState } from 'modules/unsavedchanges';
-
 
 type Props = {|
-    locale: Locale,
+    locale: LocaleState,
     parameters: NavigationParams,
     project: ProjectState,
     resources: ResourcesState,
-    unsavedchanges: UnsavedChangesState,
 |};
 
 type InternalProps = {|
     ...Props,
     dispatch: Function,
+    store: Object,
 |};
-
 
 /**
  * Render a breadcrumb-like navigation bar.
@@ -54,7 +50,7 @@ export class NavigationBase extends React.Component<InternalProps> {
             // Load resources, unless we're in the All Projects view
             if (parameters.project !== 'all-projects') {
                 this.props.dispatch(
-                    resource.actions.get(parameters.locale, parameters.project)
+                    resource.actions.get(parameters.locale, parameters.project),
                 );
             }
         }
@@ -64,7 +60,7 @@ export class NavigationBase extends React.Component<InternalProps> {
         }
     }
 
-    updateTitle = () => {
+    updateTitle: () => null | void = () => {
         const { locale, project } = this.props;
 
         if (!locale || !locale.name) {
@@ -77,69 +73,84 @@ export class NavigationBase extends React.Component<InternalProps> {
 
         const projectName = project.name || 'All Projects';
         document.title = `${locale.name} (${locale.code}) · ${projectName}`;
-    }
+    };
 
-    navigateToPath = (path: string) => {
+    navigateToPath: (path: string) => void = (path: string) => {
         const { dispatch } = this.props;
+
+        const state = this.props.store.getState();
+        const unsavedChangesExist = state[unsavedchanges.NAME].exist;
+        const unsavedChangesIgnored = state[unsavedchanges.NAME].ignored;
 
         dispatch(
             unsavedchanges.actions.check(
-                this.props.unsavedchanges,
-                () => { dispatch(push(path)); }
-            )
+                unsavedChangesExist,
+                unsavedChangesIgnored,
+                () => {
+                    dispatch(push(path));
+                },
+            ),
         );
-    }
+    };
 
-    render() {
+    render(): null | React.Element<'nav'> {
         const { locale, parameters, resources } = this.props;
 
         if (!locale) {
             return null;
         }
 
-        return <nav className="navigation">
-            <ul>
-                <li>
-                    <a href="/">
-                        <img
-                            src="/static/img/logo.svg"
-                            width="32"
-                            height="32"
-                            alt="Pontoon logo"
-                        />
-                    </a>
-                </li>
-                <li>
-                    <a href={ `/${locale.code}/` }>
-                        { locale.name }
-                        <span className="locale-code">{ locale.code }</span>
-                    </a>
-                </li>
-                <project.ProjectMenu
-                    locale={ locale }
-                    parameters={ parameters }
-                    project={ this.props.project }
-                    navigateToPath={ this.navigateToPath }
-                />
-                <resource.ResourceMenu
-                    parameters={ parameters }
-                    resources={ resources }
-                    navigateToPath={ this.navigateToPath }
-                />
-            </ul>
-        </nav>;
+        return (
+            <nav className='navigation'>
+                <ul>
+                    <li>
+                        <a href='/'>
+                            <img
+                                src='/static/img/logo.svg'
+                                width='32'
+                                height='32'
+                                alt='Pontoon logo'
+                            />
+                        </a>
+                    </li>
+                    <li>
+                        <a href={`/${locale.code}/`}>
+                            {locale.name}
+                            <span className='locale-code'>{locale.code}</span>
+                        </a>
+                    </li>
+                    <project.ProjectMenu
+                        locale={locale}
+                        parameters={parameters}
+                        project={this.props.project}
+                        navigateToPath={this.navigateToPath}
+                    />
+                    <resource.ResourceMenu
+                        parameters={parameters}
+                        resources={resources}
+                        navigateToPath={this.navigateToPath}
+                    />
+                </ul>
+            </nav>
+        );
     }
 }
 
-
-const mapStateToProps = (state: Object): Props => {
-    return {
-        locale: state[locale.NAME],
-        parameters: navigation.selectors.getNavigationParams(state),
-        project: state[project.NAME],
-        resources: state[resource.NAME],
-        unsavedchanges: state[unsavedchanges.NAME],
+export default function Navigation(): React.Element<typeof NavigationBase> {
+    const state = {
+        locale: useSelector((state) => state[locale.NAME]),
+        parameters: useSelector((state) =>
+            navigation.selectors.getNavigationParams(state),
+        ),
+        project: useSelector((state) => state[project.NAME]),
+        resources: useSelector((state) => state[resource.NAME]),
     };
-};
 
-export default connect(mapStateToProps)(NavigationBase);
+    return (
+        <NavigationBase
+            {...state}
+            dispatch={useDispatch()}
+            store={useStore()}
+        />
+    );
+}

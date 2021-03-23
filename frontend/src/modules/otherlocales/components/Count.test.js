@@ -3,29 +3,25 @@ import { shallow } from 'enzyme';
 
 import Count from './Count';
 
-
 describe('<Count>', () => {
     it('shows the correct number of preferred translations', () => {
         const otherlocales = {
-            translations: {
-                preferred: [
-                    {
-                        'locale': {
-                            code: 'ab',
-                        },
+            translations: [
+                {
+                    locale: {
+                        code: 'ab',
                     },
-                    {
-                        'locale': {
-                            code: 'cd',
-                        },
+                    is_preferred: true,
+                },
+                {
+                    locale: {
+                        code: 'cd',
                     },
-                ],
-                other: [],
-            },
+                    is_preferred: true,
+                },
+            ],
         };
-        const wrapper = shallow(<Count
-            otherlocales={ otherlocales }
-        />);
+        const wrapper = shallow(<Count otherlocales={otherlocales} />);
 
         // There are only preferred results.
         expect(wrapper.find('.count > span')).toHaveLength(1);
@@ -38,30 +34,25 @@ describe('<Count>', () => {
 
     it('shows the correct number of other translations', () => {
         const otherlocales = {
-            translations: {
-                preferred: [],
-                other: [
-                    {
-                        'locale': {
-                            code: 'ef',
-                        },
+            translations: [
+                {
+                    locale: {
+                        code: 'ef',
                     },
-                    {
-                        'locale': {
-                            code: 'gh',
-                        },
+                },
+                {
+                    locale: {
+                        code: 'gh',
                     },
-                    {
-                        'locale': {
-                            code: 'ij',
-                        },
+                },
+                {
+                    locale: {
+                        code: 'ij',
                     },
-                ],
-            },
+                },
+            ],
         };
-        const wrapper = shallow(<Count
-            otherlocales={ otherlocales }
-        />);
+        const wrapper = shallow(<Count otherlocales={otherlocales} />);
 
         // There are only remaining results.
         expect(wrapper.find('.count > span')).toHaveLength(1);
@@ -75,41 +66,37 @@ describe('<Count>', () => {
 
     it('shows the correct numbers of preferred and other translations', () => {
         const otherlocales = {
-            translations: {
-                preferred: [
-                    {
-                        'locale': {
-                            code: 'ab',
-                        },
+            translations: [
+                {
+                    locale: {
+                        code: 'ab',
                     },
-                    {
-                        'locale': {
-                            code: 'cd',
-                        },
+                    is_preferred: true,
+                },
+                {
+                    locale: {
+                        code: 'cd',
                     },
-                ],
-                other: [
-                    {
-                        'locale': {
-                            code: 'ef',
-                        },
+                    is_preferred: true,
+                },
+                {
+                    locale: {
+                        code: 'ef',
                     },
-                    {
-                        'locale': {
-                            code: 'gh',
-                        },
+                },
+                {
+                    locale: {
+                        code: 'gh',
                     },
-                    {
-                        'locale': {
-                            code: 'ij',
-                        },
+                },
+                {
+                    locale: {
+                        code: 'ij',
                     },
-                ],
-            },
+                },
+            ],
         };
-        const wrapper = shallow(<Count
-            otherlocales={ otherlocales }
-        />);
+        const wrapper = shallow(<Count otherlocales={otherlocales} />);
 
         // There are both preferred and remaining, and the '+' sign.
         expect(wrapper.find('.count > span')).toHaveLength(3);

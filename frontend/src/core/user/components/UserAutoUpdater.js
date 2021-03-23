@@ -3,11 +3,9 @@
 
 import * as React from 'react';
 
-
 type Props = {
     getUserData: () => void,
 };
-
 
 /**
  * Regularly fetch user data to keep it up-to-date with the server.
@@ -15,9 +13,9 @@ type Props = {
 export default class UserAutoUpdater extends React.Component<Props> {
     timer: ?IntervalID;
 
-    fetchUserData = () => {
+    fetchUserData: () => void = () => {
         this.props.getUserData();
-    }
+    };
 
     componentDidMount() {
         this.fetchUserData();
@@ -30,7 +28,7 @@ export default class UserAutoUpdater extends React.Component<Props> {
         }
     }
 
-    render() {
+    render(): null {
         return null;
     }
 }

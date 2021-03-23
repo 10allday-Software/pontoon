@@ -1,8 +1,7 @@
-from __future__ import absolute_import
-
 import json
 
 from dateutil.relativedelta import relativedelta
+from django.conf import settings as django_settings
 from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
@@ -65,8 +64,9 @@ def contributor_timeline(request, username):
     counts_by_day = contributor_translations.values("day").annotate(count=Count("id"))
 
     try:
-        events_paginator = Paginator(counts_by_day, 10)
-        timeline_events = []
+        events_paginator = Paginator(
+            counts_by_day, django_settings.CONTRIBUTORS_TIMELINE_EVENTS_PER_PAGE
+        )
 
         timeline_events = map_translations_to_events(
             events_paginator.page(page).object_list, contributor_translations
@@ -137,7 +137,7 @@ def save_custom_homepage(request):
     form = forms.UserCustomHomepageForm(request.POST, instance=request.user.profile)
 
     if not form.is_valid():
-        error = escape(u"\n".join(form.errors["custom_homepage"]))
+        error = escape("\n".join(form.errors["custom_homepage"]))
         return HttpResponseBadRequest(error)
 
     form.save()
@@ -155,7 +155,7 @@ def save_preferred_source_locale(request):
     )
 
     if not form.is_valid():
-        error = escape(u"\n".join(form.errors["preferred_source_locale"]))
+        error = escape("\n".join(form.errors["preferred_source_locale"]))
         return HttpResponseBadRequest(error)
 
     form.save()
@@ -281,7 +281,7 @@ def mark_all_notifications_as_read(request):
     return JsonResponse({"status": True})
 
 
-class ContributorsMixin(object):
+class ContributorsMixin:
     def contributors_filter(self, **kwargs):
         """
         Return Q() filters for fetching contributors. Fetches all by default.
@@ -290,7 +290,7 @@ class ContributorsMixin(object):
 
     def get_context_data(self, **kwargs):
         """Top contributors view."""
-        context = super(ContributorsMixin, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         try:
             period = int(self.request.GET["period"])
             if period <= 0:

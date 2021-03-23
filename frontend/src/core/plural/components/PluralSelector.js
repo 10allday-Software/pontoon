@@ -1,7 +1,7 @@
 /* @flow */
 
 import * as React from 'react';
-import { connect } from 'react-redux';
+import { useDispatch, useSelector, useStore } from 'react-redux';
 
 import './PluralSelector.css';
 
@@ -11,20 +11,22 @@ import * as unsavedchanges from 'modules/unsavedchanges';
 import { actions, CLDR_PLURALS, selectors } from '..';
 
 import type { Locale } from 'core/locale';
-import type { UnsavedChangesState } from 'modules/unsavedchanges';
-
 
 type Props = {|
     locale: Locale,
     pluralForm: number,
-    unsavedchanges: UnsavedChangesState,
+|};
+
+type WrapperProps = {|
+    resetEditor: Function,
 |};
 
 type InternalProps = {|
     ...Props,
+    ...WrapperProps,
     dispatch: Function,
+    store: Object,
 |};
-
 
 /**
  * Plural form picker component.
@@ -40,50 +42,74 @@ export class PluralSelectorBase extends React.Component<InternalProps> {
 
         const { dispatch } = this.props;
 
+        const state = this.props.store.getState();
+        const unsavedChangesExist = state[unsavedchanges.NAME].exist;
+        const unsavedChangesIgnored = state[unsavedchanges.NAME].ignored;
+
         dispatch(
             unsavedchanges.actions.check(
-                this.props.unsavedchanges,
+                unsavedChangesExist,
+                unsavedChangesIgnored,
                 () => {
-                    dispatch(
-                        actions.select(pluralForm)
-                    );
-                }
-            )
+                    this.props.resetEditor();
+                    dispatch(actions.select(pluralForm));
+                },
+            ),
         );
     }
 
-    render() {
+    render(): null | React.Element<'nav'> {
         const props = this.props;
         const { pluralForm } = props;
 
-        if (pluralForm === -1 || !props.locale || props.locale.cldrPlurals.length <= 1) {
+        if (
+            pluralForm === -1 ||
+            !props.locale ||
+            props.locale.cldrPlurals.length <= 1
+        ) {
             return null;
         }
 
         const examples = locale.getPluralExamples(props.locale);
 
-        return <nav className="plural-selector">
-            <ul>
-                { props.locale.cldrPlurals.map((item, i) => {
-                    return <li key={ item } className={ i === pluralForm ? 'active' : '' }>
-                        <button onClick={ () => this.selectPluralForm(i) }>
-                            <span>{ CLDR_PLURALS[item] }</span>
-                            <sup>{ examples[item] }</sup>
-                        </button>
-                    </li>;
-                }) }
-            </ul>
-        </nav>;
+        return (
+            <nav className='plural-selector'>
+                <ul>
+                    {props.locale.cldrPlurals.map((item, i) => {
+                        return (
+                            <li
+                                key={item}
+                                className={i === pluralForm ? 'active' : ''}
+                            >
+                                <button
+                                    onClick={() => this.selectPluralForm(i)}
+                                >
+                                    <span>{CLDR_PLURALS[item]}</span>
+                                    <sup>{examples[item]}</sup>
+                                </button>
+                            </li>
+                        );
+                    })}
+                </ul>
+            </nav>
+        );
     }
 }
 
-
-const mapStateToProps = (state: Object): Props => {
-    return {
-        locale: state[locale.NAME],
-        pluralForm: selectors.getPluralForm(state),
-        unsavedchanges: state[unsavedchanges.NAME],
+export default function PluralSelector(
+    props: WrapperProps,
+): React.Element<typeof PluralSelectorBase> {
+    const state = {
+        locale: useSelector((state) => state[locale.NAME]),
+        pluralForm: useSelector((state) => selectors.getPluralForm(state)),
     };
-};
 
-export default connect(mapStateToProps)(PluralSelectorBase);
+    return (
+        <PluralSelectorBase
+            {...props}
+            {...state}
+            dispatch={useDispatch()}
+            store={useStore()}
+        />
+    );
+}

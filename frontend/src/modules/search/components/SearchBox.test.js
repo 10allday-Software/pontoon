@@ -2,34 +2,26 @@ import React from 'react';
 import { mount, shallow } from 'enzyme';
 import sinon from 'sinon';
 
-import { createReduxStore } from 'test/store';
-import { shallowUntilTarget, sleep } from 'test/utils';
+import { createReduxStore, mountComponentWithStore } from 'test/store';
 
 import { actions } from 'core/navigation';
 import SearchBox, { SearchBoxBase } from './SearchBox';
-import { FILTERS_STATUS, FILTERS_EXTRA } from '..';
+import { FILTERS_STATUS, FILTERS_EXTRA } from '../constants';
 
-
-const FILTERS = [].concat(
-    FILTERS_STATUS,
-    FILTERS_EXTRA,
-);
-
+const FILTERS = [].concat(FILTERS_STATUS, FILTERS_EXTRA);
 
 const PROJECT = {
     tags: [],
-}
-
+};
 
 const SEARCH_AND_FILTERS = {
     authors: [],
     countsPerMinute: [],
-}
-
+};
 
 describe('<SearchBoxBase>', () => {
     beforeAll(() => {
-        sinon.stub(actions, 'update').returns({ type: 'whatever'});
+        sinon.stub(actions, 'update').returns({ type: 'whatever' });
     });
 
     afterEach(() => {
@@ -44,11 +36,13 @@ describe('<SearchBoxBase>', () => {
         const params = {
             search: '',
         };
-        const wrapper = shallow(<SearchBoxBase
-            parameters={ params }
-            project={ PROJECT }
-            searchAndFilters={ SEARCH_AND_FILTERS }
-        />);
+        const wrapper = shallow(
+            <SearchBoxBase
+                parameters={params}
+                project={PROJECT}
+                searchAndFilters={SEARCH_AND_FILTERS}
+            />,
+        );
 
         expect(wrapper.find('input#search')).toHaveLength(1);
     });
@@ -59,17 +53,20 @@ describe('<SearchBoxBase>', () => {
 
             if (FILTERS_STATUS.includes(filter)) {
                 params = { status: filter.slug };
-            }
-            else if (FILTERS_EXTRA.includes(filter)) {
+            } else if (FILTERS_EXTRA.includes(filter)) {
                 params = { extra: filter.slug };
             }
 
-            const wrapper = shallow(<SearchBoxBase
-                parameters={ params }
-                project={ PROJECT }
-                searchAndFilters={ SEARCH_AND_FILTERS }
-            />);
-            expect(wrapper.find('input#search').prop('placeholder')).toContain(filter.name);
+            const wrapper = shallow(
+                <SearchBoxBase
+                    parameters={params}
+                    project={PROJECT}
+                    searchAndFilters={SEARCH_AND_FILTERS}
+                />,
+            );
+            expect(wrapper.find('input#search').prop('placeholder')).toContain(
+                filter.name,
+            );
         }
     });
 
@@ -77,11 +74,13 @@ describe('<SearchBoxBase>', () => {
         const params = {
             search: 'search',
         };
-        const wrapper = shallow(<SearchBoxBase
-            parameters={ params }
-            project={ PROJECT }
-            searchAndFilters={ SEARCH_AND_FILTERS }
-        />);
+        const wrapper = shallow(
+            <SearchBoxBase
+                parameters={params}
+                project={PROJECT}
+                searchAndFilters={SEARCH_AND_FILTERS}
+            />,
+        );
 
         wrapper.setProps({
             parameters: {
@@ -93,36 +92,40 @@ describe('<SearchBoxBase>', () => {
     });
 
     it('returns correct list of selected statuses', () => {
-        const wrapper = shallow(<SearchBoxBase
-            parameters={ {} }
-            project={ PROJECT }
-            searchAndFilters={ SEARCH_AND_FILTERS }
-        />);
+        const wrapper = shallow(
+            <SearchBoxBase
+                parameters={{}}
+                project={PROJECT}
+                searchAndFilters={SEARCH_AND_FILTERS}
+            />,
+        );
 
         wrapper.setState({
             statuses: {
                 warnings: true,
                 errors: true,
                 missing: false,
-            }
+            },
         });
 
         const selected = wrapper.instance().getSelectedStatuses();
-        expect(selected).toEqual([ 'warnings', 'errors' ]);
+        expect(selected).toEqual(['warnings', 'errors']);
     });
 
     it('returns correct list of selected extras', () => {
-        const wrapper = shallow(<SearchBoxBase
-            parameters={ {} }
-            project={ PROJECT }
-            searchAndFilters={ SEARCH_AND_FILTERS }
-        />);
+        const wrapper = shallow(
+            <SearchBoxBase
+                parameters={{}}
+                project={PROJECT}
+                searchAndFilters={SEARCH_AND_FILTERS}
+            />,
+        );
 
         wrapper.setState({
             extras: {
                 unchanged: true,
                 rejected: false,
-            }
+            },
         });
 
         const selected = wrapper.instance().getSelectedExtras();
@@ -130,11 +133,13 @@ describe('<SearchBoxBase>', () => {
     });
 
     it('toggles a filter', () => {
-        const wrapper = shallow(<SearchBoxBase
-            parameters={ {} }
-            project={ PROJECT }
-            searchAndFilters={ SEARCH_AND_FILTERS }
-        />);
+        const wrapper = shallow(
+            <SearchBoxBase
+                parameters={{}}
+                project={PROJECT}
+                searchAndFilters={SEARCH_AND_FILTERS}
+            />,
+        );
 
         wrapper.setState({ statuses: { missing: false } });
         expect(wrapper.state('statuses').missing).toBeFalsy();
@@ -144,18 +149,20 @@ describe('<SearchBoxBase>', () => {
     });
 
     it('sets a single filter', () => {
-        const wrapper = shallow(<SearchBoxBase
-            parameters={ {} }
-            project={ PROJECT }
-            searchAndFilters={ SEARCH_AND_FILTERS }
-        />);
+        const wrapper = shallow(
+            <SearchBoxBase
+                parameters={{}}
+                project={PROJECT}
+                searchAndFilters={SEARCH_AND_FILTERS}
+            />,
+        );
 
         wrapper.setState({
             statuses: {
                 warnings: true,
                 errors: false,
                 missing: false,
-            }
+            },
         });
         expect(wrapper.state('statuses').warnings).toBeTruthy();
         expect(wrapper.state('statuses').errors).toBeFalsy();
@@ -168,11 +175,13 @@ describe('<SearchBoxBase>', () => {
     });
 
     it('resets to initial statuses', () => {
-        const wrapper = shallow(<SearchBoxBase
-            parameters={ {} }
-            project={ PROJECT }
-            searchAndFilters={ SEARCH_AND_FILTERS }
-        />);
+        const wrapper = shallow(
+            <SearchBoxBase
+                parameters={{}}
+                project={PROJECT}
+                searchAndFilters={SEARCH_AND_FILTERS}
+            />,
+        );
 
         wrapper.setState({
             statuses: {
@@ -183,7 +192,7 @@ describe('<SearchBoxBase>', () => {
             extras: {
                 unchanged: false,
                 rejected: true,
-            }
+            },
         });
 
         wrapper.instance().resetFilters();
@@ -195,36 +204,43 @@ describe('<SearchBoxBase>', () => {
     });
 
     it('sets status to null when "all" is selected', () => {
-        const wrapper = shallow(<SearchBoxBase
-            parameters={ {} }
-            project={ PROJECT }
-            searchAndFilters={ SEARCH_AND_FILTERS }
-            router={ {} }
-            dispatch={ () => {} }
-        />);
+        const wrapper = shallow(
+            <SearchBoxBase
+                parameters={{}}
+                project={PROJECT}
+                searchAndFilters={SEARCH_AND_FILTERS}
+                router={{}}
+                dispatch={() => {}}
+            />,
+        );
         wrapper.setState({ statuses: { all: true } });
 
         wrapper.instance()._update();
         expect(
-            actions.update.calledWith({}, {
-                status: null,
-                extra: '',
-                tag: '',
-                time: '',
-                author: '',
-                search: '',
-            })
+            actions.update.calledWith(
+                {},
+                {
+                    status: null,
+                    extra: '',
+                    tag: '',
+                    time: '',
+                    author: '',
+                    search: '',
+                },
+            ),
         ).toBeTruthy();
     });
 
     it('sets correct status', () => {
-        const wrapper = shallow(<SearchBoxBase
-            parameters={ {} }
-            project={ PROJECT }
-            searchAndFilters={ SEARCH_AND_FILTERS }
-            router={ {} }
-            dispatch={ () => {} }
-        />);
+        const wrapper = shallow(
+            <SearchBoxBase
+                parameters={{}}
+                project={PROJECT}
+                searchAndFilters={SEARCH_AND_FILTERS}
+                router={{}}
+                dispatch={() => {}}
+            />,
+        );
         wrapper.setState({
             statuses: { missing: true, warnings: true },
             extras: { unchanged: true },
@@ -235,31 +251,35 @@ describe('<SearchBoxBase>', () => {
 
         wrapper.instance()._update();
         expect(
-            actions.update.calledWith({}, {
-                status: 'missing,warnings',
-                extra: 'unchanged',
-                tag: 'browser',
-                time: '111111111111-111111111111',
-                author: 'user@example.com',
-                search: '',
-            })
+            actions.update.calledWith(
+                {},
+                {
+                    status: 'missing,warnings',
+                    extra: 'unchanged',
+                    tag: 'browser',
+                    time: '111111111111-111111111111',
+                    author: 'user@example.com',
+                    search: '',
+                },
+            ),
         ).toBeTruthy();
     });
 });
 
-
 describe('<SearchBox>', () => {
     it('updates the search text after a delay', () => {
         const store = createReduxStore();
-        const wrapper = shallowUntilTarget(
-            <SearchBox store={ store } />,
-            SearchBoxBase
-        );
+        const root = mountComponentWithStore(SearchBox, store);
+        const wrapper = root.find(SearchBoxBase);
 
         const updateSpy = sinon.spy(actions, 'update');
 
-        const event = { currentTarget: { value: 'test' } };
-        wrapper.find('input#search').simulate('change', event);
+        const inputChanged = { currentTarget: { value: 'test' } };
+        const input = wrapper.find('input#search');
+        // `simulate()` doesn't quite work in conjunction with `mount()`, so
+        // invoking the `prop()` callback directly is the way to go as suggested
+        // by the enzyme maintainer...
+        input.prop('onChange')(inputChanged);
 
         // The state has been updated correctly...
         expect(wrapper.state().search).toEqual('test');
@@ -267,10 +287,10 @@ describe('<SearchBox>', () => {
         // ... but it wasn't propagated to the global redux store yet.
         expect(updateSpy.calledOnce).toBeFalsy();
 
-        // Wait for 500ms until the debounce delay has passed.
-        return sleep(500).then(() => {
-            expect(updateSpy.calledOnce).toBeTruthy();
-        });
+        // Wait until Enter is pressed.
+        const enterPressed = { keyCode: 13 };
+        input.simulate('keydown', enterPressed);
+        expect(updateSpy.calledOnce).toBeTruthy();
     });
 
     it('puts focus on the search input on Ctrl + Shift + F', () => {
@@ -284,18 +304,20 @@ describe('<SearchBox>', () => {
         const params = {
             search: '',
         };
-        const wrapper = mount(<SearchBoxBase
-            parameters={ params }
-            project={ PROJECT }
-            searchAndFilters={ SEARCH_AND_FILTERS }
-        />);
+        const wrapper = mount(
+            <SearchBoxBase
+                parameters={params}
+                project={PROJECT}
+                searchAndFilters={SEARCH_AND_FILTERS}
+            />,
+        );
         const searchInput = wrapper.instance().searchInput;
 
         const focusMock = sinon.spy(searchInput.current, 'focus');
         expect(focusMock.calledOnce).toBeFalsy();
         const event = {
             preventDefault: sinon.spy(),
-            keyCode: 70,  // Up
+            keyCode: 70, // Up
             altKey: false,
             ctrlKey: true,
             shiftKey: true,

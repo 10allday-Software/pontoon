@@ -2,9 +2,8 @@
 
 import APIBase from './base';
 
-
 export default class ResourceAPI extends APIBase {
-    async getAll(locale: string, project: string) {
+    async getAll(locale: string, project: string): Promise<any> {
         const url = `/${locale}/${project}/parts/`;
 
         const headers = new Headers();

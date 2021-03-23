@@ -5,7 +5,6 @@ import { Localized } from '@fluent/react';
 
 import type { BatchActionsState } from 'modules/batchactions';
 
-
 type Props = {|
     rejectAll: () => void,
     batchactions: BatchActionsState,
@@ -14,7 +13,6 @@ type Props = {|
 type State = {|
     isConfirmationVisible: boolean,
 |};
-
 
 /**
  * Renders Reject All batch action button.
@@ -28,109 +26,110 @@ export default class RejectAll extends React.Component<Props, State> {
         };
     }
 
-    rejectAll = () => {
+    rejectAll: () => void = () => {
         if (!this.state.isConfirmationVisible) {
             this.setState({
                 isConfirmationVisible: true,
             });
-        }
-        else {
+        } else {
             this.props.rejectAll();
             this.setState({
                 isConfirmationVisible: false,
             });
         }
+    };
+
+    renderConfirmation(): React.Element<React.ElementType> {
+        return (
+            <Localized id='batchactions-RejectAll--confirmation'>
+                {'ARE YOU SURE?'}
+            </Localized>
+        );
     }
 
-    renderConfirmation() {
-        return <Localized
-            id="batchactions-RejectAll--confirmation"
-        >
-            { 'Are you sure?' }
-        </Localized>;
+    renderDefault(): React.Element<React.ElementType> {
+        return (
+            <Localized id='batchactions-RejectAll--default'>
+                {'REJECT ALL SUGGESTIONS'}
+            </Localized>
+        );
     }
 
-    renderDefault() {
-        return <Localized
-            id="batchactions-RejectAll--default"
-        >
-            { 'Reject all suggestions' }
-        </Localized>;
+    renderError(): React.Element<React.ElementType> {
+        return (
+            <Localized id='batchactions-RejectAll--error'>
+                {'OOPS, SOMETHING WENT WRONG'}
+            </Localized>
+        );
     }
 
-    renderError() {
-        return <Localized
-            id="batchactions-RejectAll--error"
-        >
-            { 'Oops, something went wrong' }
-        </Localized>;
-    }
-
-    renderInvalid() {
+    renderInvalid(): null | React.Element<React.ElementType> {
         const { response } = this.props.batchactions;
 
         if (!response) {
             return null;
         }
 
-        return <Localized
-            id="batchactions-RejectAll--invalid"
-            vars={{ invalidCount: response.invalidCount }}
-        >
-            { '{ $invalidCount } failed' }
-        </Localized>;
+        return (
+            <Localized
+                id='batchactions-RejectAll--invalid'
+                vars={{ invalidCount: response.invalidCount }}
+            >
+                {'{ $invalidCount } FAILED'}
+            </Localized>
+        );
     }
 
-    renderSuccess() {
+    renderSuccess(): null | React.Element<React.ElementType> {
         const { response } = this.props.batchactions;
 
         if (!response) {
             return null;
         }
 
-        return <Localized
-            id="batchactions-RejectAll--success"
-            vars={{ changedCount: response.changedCount }}
-        >
-            { '{ $changedCount } strings rejected' }
-        </Localized>;
+        return (
+            <Localized
+                id='batchactions-RejectAll--success'
+                vars={{ changedCount: response.changedCount }}
+            >
+                {'{ $changedCount } STRINGS REJECTED'}
+            </Localized>
+        );
     }
 
-    renderTitle() {
+    renderTitle(): null | React.Node {
         const { response } = this.props.batchactions;
 
         if (response && response.action === 'reject') {
             if (response.error) {
                 return this.renderError();
-            }
-            else if (response.invalidCount) {
-                return <>
-                    { this.renderSuccess() }
-                    { ' · ' }
-                    { this.renderInvalid() }
-                </>;
-            }
-            else {
+            } else if (response.invalidCount) {
+                return (
+                    <>
+                        {this.renderSuccess()}
+                        {' · '}
+                        {this.renderInvalid()}
+                    </>
+                );
+            } else {
                 return this.renderSuccess();
             }
-        }
-        else if (this.state.isConfirmationVisible) {
+        } else if (this.state.isConfirmationVisible) {
             return this.renderConfirmation();
-        }
-        else {
+        } else {
             return this.renderDefault();
         }
     }
 
-    render() {
-        return <button
-            className="reject-all"
-            onClick={ this.rejectAll }
-        >
-            { this.renderTitle() }
-            { this.props.batchactions.requestInProgress !== 'reject' ? null :
-                <i className="fa fa-2x fa-circle-notch fa-spin"></i>
-            }
-        </button>;
+    render(): React.Element<'button'> {
+        return (
+            <button className='reject-all' onClick={this.rejectAll}>
+                {this.renderTitle()}
+                {this.props.batchactions.requestInProgress !==
+                'reject' ? null : (
+                    <i className='fa fa-2x fa-circle-notch fa-spin'></i>
+                )}
+            </button>
+        );
     }
 }

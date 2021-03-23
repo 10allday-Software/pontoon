@@ -3,7 +3,6 @@
 import * as React from 'react';
 import { Localized } from '@fluent/react';
 
-
 /**
  * Marks functions from Fluent syntax.
  *
@@ -16,16 +15,18 @@ import { Localized } from '@fluent/react';
  *   { NUMBER($ratio, minimumFractionDigits: 2) }
  */
 const fluentFunction = {
-    rule: /({ ?[A-W0-9\-_]+[^}]* ?})/,
-    tag: (x: string) => {
-        return <Localized
-            id='placeable-parser-fluentFunction'
-            attrs={{ title: true }}
-        >
-            <mark className='placeable' title='Fluent function'>
-                { x }
-            </mark>
-        </Localized>;
+    rule: (/({ ?[A-W0-9\-_]+[^}]* ?})/: RegExp),
+    tag: (x: string): React.Element<React.ElementType> => {
+        return (
+            <Localized
+                id='placeable-parser-fluentFunction'
+                attrs={{ title: true }}
+            >
+                <mark className='placeable' title='Fluent function'>
+                    {x}
+                </mark>
+            </Localized>
+        );
     },
 };
 

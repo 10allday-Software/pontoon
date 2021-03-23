@@ -6,7 +6,6 @@ import './TranslationDiff.css';
 
 import { getDiff } from '../withDiff';
 
-
 type Props = {|
     base: string,
     target: string,
@@ -20,7 +19,7 @@ type Props = {|
  * Removed slices are wrapped in <del>.
  */
 export default class TranslationDiff extends React.Component<Props> {
-    render() {
+    render(): React.Node {
         const { base, target } = this.props;
         return getDiff(base, target);
     }

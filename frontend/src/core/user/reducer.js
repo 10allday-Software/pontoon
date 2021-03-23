@@ -1,15 +1,15 @@
 /* @flow */
 
-import { UPDATE, UPDATE_SETTINGS } from './actions';
+import { RECEIVE_USERS, UPDATE, UPDATE_SETTINGS } from './actions';
 
-import type { UpdateAction, UpdateSettingsAction } from './actions';
+import type {
+    ReceiveAction,
+    UpdateAction,
+    UpdateSettingsAction,
+} from './actions';
+import type { UsersList } from 'core/api';
 
-
-type Action =
-    | UpdateAction
-    | UpdateSettingsAction
-;
-
+type Action = ReceiveAction | UpdateAction | UpdateSettingsAction;
 
 export type SettingsState = {|
     +runQualityChecks: boolean,
@@ -44,14 +44,13 @@ function settings(
     }
 }
 
-
 export type Notification = {|
     +id: number,
     +level: string,
     +unread: string,
     +description: {
         +content: string,
-        +safe: boolean,
+        +is_comment: boolean,
     },
     +verb: string,
     +date: string,
@@ -66,12 +65,10 @@ export type Notification = {|
     },
 |};
 
-
 export type Notifications = {|
     has_unread: boolean,
     notifications: Array<Notification>,
 |};
-
 
 export type UserState = {|
     +isAuthenticated: boolean,
@@ -91,6 +88,7 @@ export type UserState = {|
     +gravatarURLSmall: string,
     +gravatarURLBig: string,
     +notifications: Notifications,
+    +users: Array<UsersList>,
 |};
 
 const initial: UserState = {
@@ -114,6 +112,7 @@ const initial: UserState = {
         has_unread: false,
         notifications: [],
     },
+    users: [],
 };
 
 export default function reducer(
@@ -121,8 +120,14 @@ export default function reducer(
     action: Action,
 ): UserState {
     switch (action.type) {
+        case RECEIVE_USERS:
+            return {
+                ...state,
+                users: action.users,
+            };
         case UPDATE:
             return {
+                ...state,
                 isAuthenticated: action.data.is_authenticated,
                 isAdmin: action.data.is_admin,
                 id: action.data.id,

@@ -16,21 +16,26 @@ type Props = {|
     navigateToPath: (string) => void,
 |};
 
-
 /**
  * Shows a list of terms.
  */
-export default function TermsList(props: Props) {
-    return <ul className="terms-list">
-        { props.terms.map((term, i) => {
-            return <Term
-                key={ i }
-                isReadOnlyEditor={ props.isReadOnlyEditor }
-                locale={ props.locale }
-                term={ term }
-                addTextToEditorTranslation={ props.addTextToEditorTranslation }
-                navigateToPath={ props.navigateToPath }
-            />;
-        }) }
-    </ul>;
+export default function TermsList(props: Props): React.Element<'ul'> {
+    return (
+        <ul className='terms-list'>
+            {props.terms.map((term, i) => {
+                return (
+                    <Term
+                        key={i}
+                        isReadOnlyEditor={props.isReadOnlyEditor}
+                        locale={props.locale}
+                        term={term}
+                        addTextToEditorTranslation={
+                            props.addTextToEditorTranslation
+                        }
+                        navigateToPath={props.navigateToPath}
+                    />
+                );
+            })}
+        </ul>
+    );
 }

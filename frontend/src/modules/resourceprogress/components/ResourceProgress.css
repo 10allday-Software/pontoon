@@ -28,7 +28,7 @@
 }
 
 .progress-chart .percent:after {
-    content: "%";
+    content: '%';
     color: #888888;
     display: block;
     font-size: 10px;
@@ -63,7 +63,6 @@
     font-weight: 300;
     margin-bottom: 5px;
     padding: 4px;
-    text-transform: uppercase;
 }
 
 .progress-chart .menu header h2.small {
@@ -71,7 +70,7 @@
 }
 
 .progress-chart .menu header h2 .value {
-    color: #FFFFFF;
+    color: #ffffff;
     font-size: 28px;
     padding: 0 5px;
 }
@@ -81,7 +80,7 @@
 }
 
 .progress-chart .menu .percent {
-    color: #FFFFFF;
+    color: #ffffff;
     font-size: 90px;
     line-height: 100px;
     top: 140px;
@@ -94,7 +93,7 @@
 
 .progress-chart .menu .details div {
     border-top: 5px solid;
-    color: #AAAAAA;
+    color: #aaaaaa;
     display: inline-block;
     margin-right: 1px;
     width: 79px;
@@ -106,32 +105,31 @@
 }
 
 .progress-chart .menu .details div.approved {
-    border-color: #7BC876;
+    border-color: #7bc876;
 }
 
 .progress-chart .menu .details div.fuzzy {
-    border-color: #FED271;
+    border-color: #fed271;
 }
 
 .progress-chart .menu .details div.warnings {
-    border-color: #FFA10F;
+    border-color: #ffa10f;
 }
 
 .progress-chart .menu .details div.errors {
-    border-color: #F36;
+    border-color: #f36;
 }
 
 .progress-chart .menu .details div.missing {
-    border-color: #4D5967;
+    border-color: #5f7285;
 }
 
 .progress-chart .menu .details div .title {
     font-size: 10px;
-    text-transform: uppercase;
 }
 
 .progress-chart .menu .details div .value {
-    color: #FFFFFF;
+    color: #ffffff;
     font-size: 22px;
     font-weight: 300;
     padding: 5px 0 10px;

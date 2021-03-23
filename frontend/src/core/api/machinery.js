@@ -5,12 +5,14 @@ import APIBase from './base';
 import type { Locale } from 'core/locale';
 import type { MachineryTranslation } from './types';
 
-
 type Translations = Array<MachineryTranslation>;
-
+type ConcordanceTranslations = {|
+    results: Array<MachineryTranslation>,
+    hasMore: boolean,
+|};
 
 export default class MachineryAPI extends APIBase {
-    async _get(url: string, params: Object) {
+    async _get(url: string, params: Object): Promise<any> {
         const payload = new URLSearchParams();
         for (let param in params) {
             payload.append(param, params[param]);
@@ -23,15 +25,57 @@ export default class MachineryAPI extends APIBase {
     }
 
     /**
-     * Return translations from Pontoon's memory.
+     * Return results from Concordance search.
      */
-    async getTranslationMemory(source: string, locale: Locale, pk: ?number): Promise<Translations> {
-        const url = '/translation-memory/';
+    async getConcordanceResults(
+        source: string,
+        locale: Locale,
+        page?: number,
+    ): Promise<ConcordanceTranslations> {
+        const url = '/concordance-search/';
         const params = {
             text: source,
             locale: locale.code,
-            pk: (pk || '').toString(),
+            page: (page || 1).toString(),
         };
+
+        const results = await this._get(url, params);
+
+        if (!results.results || !Array.isArray(results.results)) {
+            return { results: [], hasMore: false };
+        }
+
+        const searchResults = results.results.map(
+            (item): MachineryTranslation => {
+                return {
+                    sources: ['concordance-search'],
+                    original: item.source,
+                    translation: item.target,
+                    projectNames: item.project_names,
+                };
+            },
+        );
+
+        return { results: searchResults, hasMore: results.has_next };
+    }
+
+    /**
+     * Return translations from Pontoon's memory.
+     */
+    async getTranslationMemory(
+        source: string,
+        locale: Locale,
+        pk: ?number,
+    ): Promise<Translations> {
+        const url = '/translation-memory/';
+        let params = {
+            text: source,
+            locale: locale.code,
+        };
+
+        if (pk) {
+            params[pk] = pk;
+        }
 
         const results = await this._get(url, params);
 
@@ -53,7 +97,10 @@ export default class MachineryAPI extends APIBase {
     /**
      * Return translation by Google Translate.
      */
-    async getGoogleTranslation(source: string, locale: Locale): Promise<Translations> {
+    async getGoogleTranslation(
+        source: string,
+        locale: Locale,
+    ): Promise<Translations> {
         const url = '/google-translate/';
         const params = {
             text: source,
@@ -66,17 +113,22 @@ export default class MachineryAPI extends APIBase {
             return [];
         }
 
-        return [{
-            sources: ['google-translate'],
-            original: source,
-            translation: result.translation,
-        }];
+        return [
+            {
+                sources: ['google-translate'],
+                original: source,
+                translation: result.translation,
+            },
+        ];
     }
 
     /**
      * Return translation by Microsoft Translator.
      */
-    async getMicrosoftTranslation(source: string, locale: Locale): Promise<Translations> {
+    async getMicrosoftTranslation(
+        source: string,
+        locale: Locale,
+    ): Promise<Translations> {
         const url = '/microsoft-translator/';
         const params = {
             text: source,
@@ -89,17 +141,50 @@ export default class MachineryAPI extends APIBase {
             return [];
         }
 
-        return [{
-            sources: ['microsoft-translator'],
-            original: source,
-            translation: result.translation,
-        }];
+        return [
+            {
+                sources: ['microsoft-translator'],
+                original: source,
+                translation: result.translation,
+            },
+        ];
+    }
+
+    /**
+     * Return translations by SYSTRAN.
+     */
+    async getSystranTranslation(
+        source: string,
+        locale: Locale,
+    ): Promise<Translations> {
+        const url = '/systran-translate/';
+        const params = {
+            text: source,
+            locale: locale.systranTranslateCode,
+        };
+
+        const result = await this._get(url, params);
+
+        if (!result.translation) {
+            return [];
+        }
+
+        return [
+            {
+                sources: ['systran-translate'],
+                original: source,
+                translation: result.translation,
+            },
+        ];
     }
 
     /**
      * Return translations from Microsoft Terminology.
      */
-    async getMicrosoftTerminology(source: string, locale: Locale): Promise<Translations> {
+    async getMicrosoftTerminology(
+        source: string,
+        locale: Locale,
+    ): Promise<Translations> {
         const url = '/microsoft-terminology/';
         const params = {
             text: source,
@@ -117,29 +202,6 @@ export default class MachineryAPI extends APIBase {
                 sources: ['microsoft-terminology'],
                 original: item.source,
                 translation: item.target,
-                quality: Math.round(item.quality),
-            };
-        });
-    }
-
-    /**
-     * Return translations from Transvision.
-     */
-    async getTransvisionMemory(source: string, locale: Locale): Promise<Translations> {
-        const url = '/transvision/';
-        const params = {
-            text: source,
-            locale: locale.code,
-        };
-
-        const results = await this._get(url, params);
-
-        return results.map((item): MachineryTranslation => {
-            return {
-                sources: ['transvision'],
-                original: item.source,
-                translation: item.target,
-                quality: Math.round(item.quality),
             };
         });
     }
@@ -149,11 +211,10 @@ export default class MachineryAPI extends APIBase {
      *
      * Works only for the `ga-IE` locale.
      */
-    async getCaighdeanTranslation(source: string, locale: Locale, pk: number): Promise<Translations> {
+    async getCaighdeanTranslation(pk: number): Promise<Translations> {
         const url = '/caighdean/';
         const params = {
             id: pk,
-            locale: locale.code,
         };
 
         const result = await this._get(url, params);
@@ -162,10 +223,12 @@ export default class MachineryAPI extends APIBase {
             return [];
         }
 
-        return [{
-            sources: ['caighdean'],
-            original: result.original,
-            translation: result.translation,
-        }];
+        return [
+            {
+                sources: ['caighdean'],
+                original: result.original,
+                translation: result.translation,
+            },
+        ];
     }
 }

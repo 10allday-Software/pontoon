@@ -1,15 +1,15 @@
 /* @flow */
 
 import * as React from 'react';
-import onClickOutside from 'react-onclickoutside';
 import { Localized } from '@fluent/react';
 
 import './UserNotificationsMenu.css';
 
 import UserNotification from './UserNotification';
 
-import type { UserState } from 'core/user';
+import { useOnDiscard } from 'core/utils';
 
+import type { UserState, Notification } from 'core/user';
 
 type Props = {
     markAllNotificationsAsRead: () => void,
@@ -21,11 +21,62 @@ type State = {|
     visible: boolean,
 |};
 
+type UserNotificationsMenuProps = {
+    notifications: Array<Notification>,
+    onDiscard: (e: SyntheticEvent<any>) => void,
+};
+
+export function UserNotificationsMenu({
+    notifications,
+    onDiscard,
+}: UserNotificationsMenuProps): React.Element<'div'> {
+    const ref = React.useRef(null);
+    useOnDiscard(ref, onDiscard);
+
+    return (
+        <div ref={ref} className='menu'>
+            <ul className='notification-list'>
+                {notifications.length ? (
+                    notifications.map((notification) => {
+                        return (
+                            <UserNotification
+                                notification={notification}
+                                key={notification.id}
+                            />
+                        );
+                    })
+                ) : (
+                    <li className='no'>
+                        <i className='icon fa fa-bell fa-fw'></i>
+                        <Localized id='user-UserNotificationsMenu--no-notifications-title'>
+                            <p className='title'>No new notifications.</p>
+                        </Localized>
+                        <Localized id='user-UserNotificationsMenu--no-notifications-description'>
+                            <p className='description'>
+                                Here you’ll see updates for localizations you
+                                contribute to.
+                            </p>
+                        </Localized>
+                    </li>
+                )}
+            </ul>
+
+            <div className='see-all'>
+                <Localized id='user-UserNotificationsMenu--see-all-notifications'>
+                    <a href='/notifications'>See all Notifications</a>
+                </Localized>
+            </div>
+        </div>
+    );
+}
 
 /**
  * Renders user notifications.
  */
-export class UserNotificationsMenuBase extends React.Component<Props, State> {
+export default class UserNotificationsMenuBase extends React.Component<
+    Props,
+    State,
+> {
     constructor(props: Props) {
         super(props);
 
@@ -50,7 +101,7 @@ export class UserNotificationsMenuBase extends React.Component<Props, State> {
         }
     }
 
-    handleClick = () => {
+    handleClick: () => void = () => {
         if (this.state.markAsRead) {
             this.setState({
                 markAsRead: false,
@@ -59,29 +110,27 @@ export class UserNotificationsMenuBase extends React.Component<Props, State> {
 
         this.toggleVisibility();
         this.markAllNotificationsAsRead();
-    }
+    };
 
-    toggleVisibility = () => {
+    toggleVisibility: () => void = () => {
         this.setState((state) => {
             return { visible: !state.visible };
         });
-    }
+    };
 
-    markAllNotificationsAsRead = () => {
+    markAllNotificationsAsRead: () => void = () => {
         if (this.props.user.notifications.has_unread) {
             this.props.markAllNotificationsAsRead();
         }
-    }
+    };
 
-    // This method is called by the Higher-Order Component `onClickOutside`
-    // when a user clicks outside the user menu.
-    handleClickOutside = () => {
+    handleDiscard: () => void = () => {
         this.setState({
             visible: false,
         });
-    }
+    };
 
-    render() {
+    render(): null | React.Element<'div'> {
         const { user } = this.props;
 
         if (!user || !user.isAuthenticated) {
@@ -89,10 +138,9 @@ export class UserNotificationsMenuBase extends React.Component<Props, State> {
         }
 
         let className = 'user-notifications-menu';
-        if (this.props.user.notifications.has_unread) {
+        if (user.notifications.has_unread) {
             className += ' unread';
-        }
-        else if (this.state.markAsRead) {
+        } else if (this.state.markAsRead) {
             className += ' read';
         }
 
@@ -100,56 +148,19 @@ export class UserNotificationsMenuBase extends React.Component<Props, State> {
             className += ' menu-visible';
         }
 
-        const notifications = user.notifications.notifications;
-
-        return <div className={ className }>
-            <div
-                className="selector"
-                onClick={ this.handleClick }
-            >
-                <i className="icon far fa-bell fa-fw"></i>
-            </div>
-
-            { !this.state.visible ? null :
-            <div className="menu">
-                <ul className="notification-list">
-                { notifications.length ?
-                    notifications.map((notification) => {
-                        return <UserNotification
-                            notification={ notification }
-                            key={ notification.id }
-                        />;
-                    })
-                    :
-                    <li className="no">
-                        <i className="icon fa fa-bell fa-fw"></i>
-                        <Localized
-                            id="user-UserNotificationsMenu--no-notifications-title"
-                        >
-                            <p className="title">No new notifications.</p>
-                        </Localized>
-                        <Localized
-                            id="user-UserNotificationsMenu--no-notifications-description"
-                        >
-                            <p className="description">
-                                Here you’ll see updates for localizations you contribute to.
-                            </p>
-                        </Localized>
-                    </li>
-                }
-                </ul>
-
-                <div className="see-all">
-                    <Localized
-                        id="user-UserNotificationsMenu--see-all-notifications"
-                    >
-                        <a href="/notifications">See all Notifications</a>
-                    </Localized>
+        return (
+            <div className={className}>
+                <div className='selector' onClick={this.handleClick}>
+                    <i className='icon far fa-bell fa-fw'></i>
                 </div>
+
+                {this.state.visible && (
+                    <UserNotificationsMenu
+                        notifications={user.notifications.notifications}
+                        onDiscard={this.handleDiscard}
+                    />
+                )}
             </div>
-            }
-        </div>;
+        );
     }
 }
-
-export default onClickOutside(UserNotificationsMenuBase);

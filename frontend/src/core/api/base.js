@@ -2,7 +2,6 @@
 
 import 'abortcontroller-polyfill/dist/abortcontroller-polyfill-only';
 
-
 export default class APIBase {
     abortController: AbortController;
     signal: ?AbortSignal;
@@ -35,51 +34,46 @@ export default class APIBase {
         return new URL(url, window.location.origin);
     }
 
-    toCamelCase = (s: string) => {
-        return s.replace(/([-_][a-z])/ig, ($1) => {
-            return $1.toUpperCase()
-                .replace('-', '')
-                .replace('_', '');
+    toCamelCase: (s: string) => string = (s: string) => {
+        return s.replace(/([-_][a-z])/gi, ($1) => {
+            return $1.toUpperCase().replace('-', '').replace('_', '');
         });
-    }
+    };
 
-    isObject = function (obj: any) {
-        return obj === Object(obj) && !Array.isArray(obj) && typeof obj !== 'function';
-    }
+    isObject: (obj: any) => boolean = function (obj: any) {
+        return (
+            obj === Object(obj) &&
+            !Array.isArray(obj) &&
+            typeof obj !== 'function'
+        );
+    };
 
     async fetch(
         url: string,
         method: string,
         payload: URLSearchParams | FormData | null,
         headers: Headers,
-    ): Promise<Object> {
+    ): Promise<any> {
         const fullUrl = this.getFullURL(url);
 
-        const requestParams = {};
-        requestParams.method = method;
-        requestParams.credentials = 'same-origin';
-        requestParams.headers = headers;
+        const requestParams = {
+            method: method,
+            credentials: ('same-origin': CredentialsType),
+            headers: headers,
+            // This signal is used to cancel requests with the `abort()` method.
+            signal: this.signal,
+            body: payload,
+        };
 
-        // This signal is used to cancel requests with the `abort()` method.
-        requestParams.signal = this.signal;
-
-        if (payload !== null) {
-            if (method === 'POST') {
-                requestParams.body = payload;
-            }
-            else if (method === 'GET') {
-                fullUrl.search = payload.toString();
-            }
+        if (payload !== null && method === 'GET') {
+            requestParams.body = null;
+            fullUrl.search = payload.toString();
         }
 
         let response;
         try {
-            response = await fetch(
-                fullUrl,
-                requestParams
-            );
-        }
-        catch (e) {
+            response = await fetch(fullUrl.toString(), requestParams);
+        } catch (e) {
             // Swallow Abort errors because we trigger them ourselves.
             if (e.name === 'AbortError') {
                 return {};
@@ -89,9 +83,9 @@ export default class APIBase {
 
         try {
             return await response.json();
-        }
-        catch (e) {
+        } catch (e) {
             // Catch non-JSON responses
+            /* eslint-disable no-console */
             console.error('The response content is not JSON-compatible');
             console.error(`URL: ${url} - Method: ${method}`);
             console.error(e);
@@ -100,18 +94,18 @@ export default class APIBase {
         }
     }
 
-    keysToCamelCase(results: any) {
+    keysToCamelCase(results: any): any {
         if (this.isObject(results)) {
             const newObj: any = {};
 
-            Object.keys(results)
-                .forEach((key) => {
-                    newObj[this.toCamelCase(key)] = this.keysToCamelCase(results[key]);
-                });
+            Object.keys(results).forEach((key) => {
+                newObj[this.toCamelCase(key)] = this.keysToCamelCase(
+                    results[key],
+                );
+            });
 
             return newObj;
-        }
-        else if (Array.isArray(results)) {
+        } else if (Array.isArray(results)) {
             return results.map((i) => {
                 return this.keysToCamelCase(i);
             });

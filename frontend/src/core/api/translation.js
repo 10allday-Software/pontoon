@@ -1,7 +1,7 @@
 /* @flow */
 
 import APIBase from './base';
-import type { SourceType  } from './types'
+import type { SourceType } from './types';
 
 export default class TranslationAPI extends APIBase {
     /**
@@ -20,7 +20,7 @@ export default class TranslationAPI extends APIBase {
         resource: string,
         ignoreWarnings: ?boolean,
         machinerySources: Array<SourceType>,
-    ) {
+    ): Promise<any> {
         const csrfToken = this.getCSRFToken();
 
         const payload = new URLSearchParams();
@@ -43,14 +43,22 @@ export default class TranslationAPI extends APIBase {
         payload.append('csrfmiddlewaretoken', csrfToken);
 
         const headers = new Headers();
-        headers.append('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
+        headers.append(
+            'Content-Type',
+            'application/x-www-form-urlencoded; charset=UTF-8',
+        );
         headers.append('X-Requested-With', 'XMLHttpRequest');
         headers.append('X-CSRFToken', csrfToken);
 
         return this.fetch('/translations/create/', 'POST', payload, headers);
     }
 
-    _changeStatus(url: string, id: number, resource: string, ignoreWarnings: ?boolean) {
+    _changeStatus(
+        url: string,
+        id: number,
+        resource: string,
+        ignoreWarnings: ?boolean,
+    ): Promise<any> {
         const csrfToken = this.getCSRFToken();
 
         const payload = new URLSearchParams();
@@ -71,23 +79,42 @@ export default class TranslationAPI extends APIBase {
         return this.fetch(url, 'POST', payload, headers);
     }
 
-    approve(id: number, resource: string, ignoreWarnings: ?boolean) {
-        return this._changeStatus('/translations/approve/', id, resource, ignoreWarnings);
+    approve(
+        id: number,
+        resource: string,
+        ignoreWarnings: ?boolean,
+    ): Promise<any> {
+        return this._changeStatus(
+            '/translations/approve/',
+            id,
+            resource,
+            ignoreWarnings,
+        );
     }
 
-    unapprove(id: number, resource: string) {
-        return this._changeStatus('/translations/unapprove/', id, resource);
+    unapprove(id: number, resource: string): Promise<any> {
+        return this._changeStatus(
+            '/translations/unapprove/',
+            id,
+            resource,
+            false,
+        );
     }
 
-    reject(id: number, resource: string) {
-        return this._changeStatus('/translations/reject/', id, resource);
+    reject(id: number, resource: string): Promise<any> {
+        return this._changeStatus('/translations/reject/', id, resource, false);
     }
 
-    unreject(id: number, resource: string) {
-        return this._changeStatus('/translations/unreject/', id, resource);
+    unreject(id: number, resource: string): Promise<any> {
+        return this._changeStatus(
+            '/translations/unreject/',
+            id,
+            resource,
+            false,
+        );
     }
 
-    delete(id: number) {
+    delete(id: number): Promise<any> {
         const payload = new URLSearchParams();
         payload.append('translation', id.toString());
 

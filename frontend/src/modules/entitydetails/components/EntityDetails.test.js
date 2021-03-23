@@ -2,40 +2,47 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import sinon from 'sinon';
 
-import { createReduxStore } from 'test/store';
-import { shallowUntilTarget } from 'test/utils';
+import { createReduxStore, mountComponentWithStore } from 'test/store';
 
 import * as editor from 'core/editor';
 import * as history from 'modules/history';
+import * as unsavedchanges from 'modules/unsavedchanges';
 
 import EntityDetails, { EntityDetailsBase } from './EntityDetails';
-
 
 const ENTITIES = [
     {
         pk: 42,
         original: 'le test',
-        translation: [{
-            string: 'test',
-            errors: [],
-            warnings: [],
-        }],
+        translation: [
+            {
+                string: 'test',
+                errors: [],
+                warnings: [],
+            },
+        ],
+        project: { contact: '' },
+        comment: '',
     },
     {
         pk: 1,
         original: 'something',
-        translation: [{
-            string: 'quelque chose',
-            errors: [],
-            warnings: [],
-        }],
+        translation: [
+            {
+                string: 'quelque chose',
+                errors: [],
+                warnings: [],
+            },
+        ],
+        project: { contact: '' },
+        comment: '',
     },
 ];
 const TRANSLATION = 'test';
 const SELECTED_ENTITY = {
     pk: 42,
     original: 'le test',
-    translation: [{string: TRANSLATION}],
+    translation: [{ string: TRANSLATION }],
 };
 const NAVIGATION = {
     entity: 42,
@@ -55,28 +62,28 @@ const USER = {
         forceSuggestions: true,
     },
     username: 'Franck',
-}
-
+};
 
 function createShallowEntityDetails(selectedEntity = SELECTED_ENTITY) {
-    return shallow(<EntityDetailsBase
-        activeTranslationString={ TRANSLATION }
-        history={ HISTORY }
-        otherlocales={ LOCALES }
-        navigation={ NAVIGATION }
-        selectedEntity={ selectedEntity }
-        parameters={ PARAMETERS }
-        locale={ { code: 'kg' } }
-        dispatch={ () => {} }
-        user={ { settings: {} } }
-    />);
+    return shallow(
+        <EntityDetailsBase
+            activeTranslationString={TRANSLATION}
+            history={HISTORY}
+            otherlocales={LOCALES}
+            navigation={NAVIGATION}
+            selectedEntity={selectedEntity}
+            parameters={PARAMETERS}
+            locale={{ code: 'kg' }}
+            dispatch={() => {}}
+            user={{ settings: {} }}
+        />,
+    );
 }
-
 
 function createEntityDetailsWithStore() {
     const initialState = {
         entities: {
-            entities: ENTITIES
+            entities: ENTITIES,
         },
         user: USER,
         router: {
@@ -84,24 +91,26 @@ function createEntityDetailsWithStore() {
                 pathname: '/kg/pro/all/',
                 search: '?string=' + ENTITIES[0].pk,
             },
+            action: 'some-string-to-please-connected-react-router',
         },
         locale: {
             code: 'kg',
         },
     };
     const store = createReduxStore(initialState);
+    const root = mountComponentWithStore(EntityDetails, store);
 
-    return [shallowUntilTarget(
-        <EntityDetails store={ store } />,
-        EntityDetailsBase
-    ), store];
+    return [root.find(EntityDetailsBase), store];
 }
-
 
 describe('<EntityDetailsBase>', () => {
     beforeAll(() => {
-        sinon.stub(editor.actions, 'updateFailedChecks').returns({ type: 'whatever'});
-        sinon.stub(editor.actions, 'resetFailedChecks').returns({ type: 'whatever'});
+        sinon
+            .stub(editor.actions, 'updateFailedChecks')
+            .returns({ type: 'whatever' });
+        sinon
+            .stub(editor.actions, 'resetFailedChecks')
+            .returns({ type: 'whatever' });
     });
 
     afterEach(() => {
@@ -140,12 +149,14 @@ describe('<EntityDetailsBase>', () => {
             selectedEntity: {
                 pk: 2,
                 original: 'something',
-                translation: [{
-                    approved: true,
-                    string: 'quelque chose',
-                    errors: ['Error1'],
-                    warnings: ['Warning1'],
-                }],
+                translation: [
+                    {
+                        approved: true,
+                        string: 'quelque chose',
+                        errors: ['Error1'],
+                        warnings: ['Warning1'],
+                    },
+                ],
             },
         });
 
@@ -166,12 +177,14 @@ describe('<EntityDetailsBase>', () => {
             selectedEntity: {
                 pk: 2,
                 original: 'something',
-                translation: [{
-                    approved: true,
-                    string: 'quelque chose',
-                    errors: [],
-                    warnings: [],
-                }],
+                translation: [
+                    {
+                        approved: true,
+                        string: 'quelque chose',
+                        errors: [],
+                        warnings: [],
+                    },
+                ],
             },
         });
 
@@ -183,8 +196,10 @@ describe('<EntityDetailsBase>', () => {
 
 describe('<EntityDetails>', () => {
     beforeAll(() => {
-        sinon.stub(editor.actions, 'update').returns({ type: 'whatever'});
-        sinon.stub(history.actions, 'updateStatus').returns({ type: 'whatever'});
+        sinon.stub(editor.actions, 'update').returns({ type: 'whatever' });
+        sinon
+            .stub(history.actions, 'updateStatus')
+            .returns({ type: 'whatever' });
     });
 
     afterEach(() => {
@@ -197,9 +212,11 @@ describe('<EntityDetails>', () => {
     });
 
     it('dispatches the updateStatus action when updateTranslationStatus is called', () => {
-        const [wrapper] = createEntityDetailsWithStore();
+        const [wrapper, store] = createEntityDetailsWithStore();
 
         wrapper.instance().updateTranslationStatus(42, 'fake translation');
+        // Proceed with changes even if unsaved
+        store.dispatch(unsavedchanges.actions.ignore());
         expect(history.actions.updateStatus.calledOnce).toBeTruthy();
     });
 });

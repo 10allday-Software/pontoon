@@ -5,6 +5,14 @@
 }
 
 .project-menu .menu li a:hover {
-    background: #3F4752;
+    background: #3f4752;
     color: #fff;
+}
+
+.project-menu .menu li a .project {
+    display: inline-block;
+    max-width: 550px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }

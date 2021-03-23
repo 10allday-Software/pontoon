@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 from django.contrib import admin
 from django.urls import reverse
 from django.utils.safestring import mark_safe
@@ -10,7 +8,7 @@ from pontoon.sync import models
 TIMES = ("start_time", "end_time", "duration")
 
 
-class EditLinkToInlineObject(object):
+class EditLinkToInlineObject:
     def edit_link(self, instance):
         url = reverse(
             "admin:%s_%s_change"
@@ -18,7 +16,7 @@ class EditLinkToInlineObject(object):
             args=[instance.pk],
         )
         if instance.pk:
-            return mark_safe(u'<a href="{u}">edit</a>'.format(u=url))
+            return mark_safe(f'<a href="{url}">edit</a>')
         else:
             return ""
 

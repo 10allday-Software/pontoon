@@ -2,9 +2,8 @@
 
 import APIBase from './base';
 
-
 export default class LocaleAPI extends APIBase {
-    async get(code: string) {
+    async get(code: string): Promise<any> {
         const query = `{
             locale(code: "${code}") {
                 code
@@ -15,8 +14,8 @@ export default class LocaleAPI extends APIBase {
                 script
                 googleTranslateCode
                 msTranslatorCode
+                systranTranslateCode
                 msTerminologyCode
-                transvision
                 localizations {
                     totalStrings
                     approvedStrings
@@ -35,6 +34,6 @@ export default class LocaleAPI extends APIBase {
         const headers = new Headers();
         headers.append('X-Requested-With', 'XMLHttpRequest');
 
-        return await this.fetch('/graphql/', 'GET', payload, headers);
+        return await this.fetch('/graphql', 'GET', payload, headers);
     }
 }

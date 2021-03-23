@@ -1,21 +1,16 @@
 /* @flow */
 
 import * as React from 'react';
+import { useSelector } from 'react-redux';
 import { Localized } from '@fluent/react';
 
-import type { EntityTranslation } from 'core/api';
-import type { ChangeOperation } from 'modules/history';
+import * as user from 'core/user';
 
+import * as editor from '..';
 
 type Props = {
-    isRunningRequest: boolean,
-    isTranslator: boolean,
-    forceSuggestions: boolean,
-    sameExistingTranslation: ?EntityTranslation,
-    sendTranslation: () => void,
-    updateTranslationStatus: (number, ChangeOperation, ?boolean) => void,
+    sendTranslation: (ignoreWarnings?: boolean) => void,
 };
-
 
 /**
  * Render the main action button of the Editor.
@@ -28,15 +23,23 @@ type Props = {
  * Otherwise, if the "force suggestion" user setting is on, it renders "Suggest".
  * Otherwise, it renders "Save".
  */
-export default function EditorMainAction(props: Props) {
-    const {
-        isRunningRequest,
-        isTranslator,
-        forceSuggestions,
-        sameExistingTranslation,
-        sendTranslation,
-        updateTranslationStatus,
-    } = props;
+export default function EditorMainAction(
+    props: Props,
+): React.Element<React.ElementType> {
+    const isRunningRequest = useSelector(
+        (state) => state.editor.isRunningRequest,
+    );
+    const forceSuggestions = useSelector(
+        (state) => state.user.settings.forceSuggestions,
+    );
+    const isTranslator = useSelector((state) =>
+        user.selectors.isTranslator(state),
+    );
+    const sameExistingTranslation = useSelector((state) =>
+        editor.selectors.sameExistingTranslation(state),
+    );
+
+    const updateTranslationStatus = editor.useUpdateTranslationStatus();
 
     function approveTranslation() {
         if (sameExistingTranslation) {
@@ -50,73 +53,78 @@ export default function EditorMainAction(props: Props) {
         action: Function,
         title: string,
         label: string,
-        glyph: ?React.Node,
+        glyph: ?React.Element<'i'>,
     };
 
-    if (isTranslator && sameExistingTranslation && !sameExistingTranslation.approved) {
+    if (
+        isTranslator &&
+        sameExistingTranslation &&
+        !sameExistingTranslation.approved
+    ) {
         // Approve button, will approve the translation.
         btn = {
             id: 'editor-EditorMenu--button-approve',
             className: 'action-approve',
             action: approveTranslation,
             title: 'Approve Translation (Enter)',
-            label: 'Approve',
+            label: 'APPROVE',
             glyph: null,
         };
 
         if (isRunningRequest) {
             btn.id = 'editor-EditorMenu--button-approving';
-            btn.label = 'Approving';
-            btn.glyph = <i className="fa fa-circle-notch fa-spin" />;
+            btn.label = 'APPROVING';
+            btn.glyph = <i className='fa fa-circle-notch fa-spin' />;
         }
-    }
-    else if (forceSuggestions || !isTranslator) {
+    } else if (forceSuggestions || !isTranslator) {
         // Suggest button, will send an unreviewed translation.
         btn = {
             id: 'editor-EditorMenu--button-suggest',
             className: 'action-suggest',
-            action: sendTranslation,
+            action: props.sendTranslation,
             title: 'Suggest Translation (Enter)',
-            label: 'Suggest',
+            label: 'SUGGEST',
             glyph: null,
         };
 
         if (isRunningRequest) {
             btn.id = 'editor-EditorMenu--button-suggesting';
-            btn.label = 'Suggesting';
-            btn.glyph = <i className="fa fa-circle-notch fa-spin" />;
+            btn.label = 'SUGGESTING';
+            btn.glyph = <i className='fa fa-circle-notch fa-spin' />;
         }
-    }
-    else {
+    } else {
         // Save button, will send an approved translation.
         btn = {
             id: 'editor-EditorMenu--button-save',
             className: 'action-save',
-            action: sendTranslation,
+            action: props.sendTranslation,
             title: 'Save Translation (Enter)',
-            label: 'Save',
+            label: 'SAVE',
             glyph: null,
         };
 
         if (isRunningRequest) {
             btn.id = 'editor-EditorMenu--button-saving';
-            btn.label = 'Saving';
-            btn.glyph = <i className="fa fa-circle-notch fa-spin" />;
+            btn.label = 'SAVING';
+            btn.glyph = <i className='fa fa-circle-notch fa-spin' />;
         }
     }
 
-    return <Localized
-        id={ btn.id }
-        attrs={{ title: true }}
-        glyph={ btn.glyph }
-    >
-        <button
-            className={ btn.className }
-            onClick={ btn.action }
-            title={ btn.title}
-            disabled={ isRunningRequest }
+    return (
+        <Localized
+            id={btn.id}
+            attrs={{ title: true }}
+            elems={{ glyph: btn.glyph }}
         >
-            { btn.glyph }{ btn.label }
-        </button>
-    </Localized>;
+            <button
+                className={btn.className}
+                onClick={btn.action}
+                title={btn.title}
+                disabled={isRunningRequest}
+            >
+                {btn.glyph}
+                {btn.label}
+            </button>
+        </Localized>
+    );
 }

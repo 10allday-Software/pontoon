@@ -20,6 +20,7 @@
 {% block heading %}
 <section id="heading">
   <div class="container clearfix">
+    {{ HeadingInfo.download_selector(locale.code, "all-projects") }}
     <h1>
       {{ HeadingInfo.heading_item(
         title=locale.name,
@@ -90,6 +91,16 @@
           icon = 'users',
         )
       }}
+      {% if settings.ENABLE_INSIGHTS_TAB %}
+      {{ Menu.item(
+          'Insights',
+          url('pontoon.teams.insights', locale.code),
+          is_active = (current_page == 'insights'),
+          count = False,
+          icon = 'chart-line',
+        )
+      }}
+      {% endif %}
       {% if settings.ENABLE_BUGS_TAB %}
       {{ Menu.item(
           'Bugs',

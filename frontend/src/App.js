@@ -14,6 +14,7 @@ import * as notification from 'core/notification';
 import * as project from 'core/project';
 import * as resource from 'core/resource';
 import * as stats from 'core/stats';
+import * as user from 'core/user';
 import * as batchactions from 'modules/batchactions';
 import { UserControls } from 'core/user';
 import { BatchActions } from 'modules/batchactions';
@@ -31,7 +32,7 @@ import type { LocaleState } from 'core/locale';
 import type { NavigationParams } from 'core/navigation';
 import type { ProjectState } from 'core/project';
 import type { Stats } from 'core/stats';
-
+import type { UserState } from 'core/user';
 
 type Props = {|
     batchactions: BatchActionsState,
@@ -41,13 +42,13 @@ type Props = {|
     parameters: NavigationParams,
     project: ProjectState,
     stats: Stats,
+    users: UserState,
 |};
 
 type InternalProps = {
     ...Props,
     dispatch: Function,
 };
-
 
 /**
  * Main entry point to the application. Will render the structure of the page.
@@ -58,11 +59,12 @@ class App extends React.Component<InternalProps> {
 
         this.props.dispatch(locale.actions.get(parameters.locale));
         this.props.dispatch(project.actions.get(parameters.project));
+        this.props.dispatch(user.actions.getUsers());
 
         // Load resources, unless we're in the All Projects view
         if (parameters.project !== 'all-projects') {
             this.props.dispatch(
-                resource.actions.get(parameters.locale, parameters.project)
+                resource.actions.get(parameters.locale, parameters.project),
             );
         }
     }
@@ -74,8 +76,7 @@ class App extends React.Component<InternalProps> {
         if (
             !this.props.l10n.fetching &&
             !this.props.locale.fetching &&
-            (prevProps.l10n.fetching ||
-            prevProps.locale.fetching)
+            (prevProps.l10n.fetching || prevProps.locale.fetching)
         ) {
             let notifications = [];
             const rootElt = document.getElementById('root');
@@ -87,7 +88,9 @@ class App extends React.Component<InternalProps> {
                 // Our notification system only supports showing one notification
                 // for the moment, so we only add the first notification here.
                 const notif = notifications[0];
-                this.props.dispatch(notification.actions.addRaw(notif.content, notif.type));
+                this.props.dispatch(
+                    notification.actions.addRaw(notif.content, notif.type),
+                );
             }
         }
     }
@@ -99,34 +102,38 @@ class App extends React.Component<InternalProps> {
             return <WaveLoader />;
         }
 
-        return <div id="app">
-            <header>
-                <Navigation />
-                <ResourceProgress
-                    stats={ state.stats }
-                    parameters={ state.parameters }
-                />
-                <ProjectInfo
-                    projectSlug={ state.parameters.project }
-                    project={ state.project }
-                />
-                <notification.NotificationPanel notification={ state.notification } />
-                <UserControls />
-            </header>
-            <section className="panel-list">
-                <SearchBox />
-                <EntitiesList />
-            </section>
-            <section className="panel-content">
-                { state.batchactions.entities.length === 0 ?
-                    <EntityDetails />
-                    :
-                    <BatchActions />
-                }
-            </section>
-            <Lightbox />
-            <InteractiveTour />
-        </div>;
+        return (
+            <div id='app'>
+                <header>
+                    <Navigation />
+                    <ResourceProgress
+                        stats={state.stats}
+                        parameters={state.parameters}
+                    />
+                    <ProjectInfo
+                        projectSlug={state.parameters.project}
+                        project={state.project}
+                    />
+                    <notification.NotificationPanel
+                        notification={state.notification}
+                    />
+                    <UserControls />
+                </header>
+                <section className='panel-list'>
+                    <SearchBox />
+                    <EntitiesList />
+                </section>
+                <section className='panel-content'>
+                    {state.batchactions.entities.length === 0 ? (
+                        <EntityDetails />
+                    ) : (
+                        <BatchActions />
+                    )}
+                </section>
+                <Lightbox />
+                <InteractiveTour />
+            </div>
+        );
     }
 }
 
@@ -139,7 +146,8 @@ const mapStateToProps = (state: Object): Props => {
         parameters: navigation.selectors.getNavigationParams(state),
         project: state[project.NAME],
         stats: state[stats.NAME],
+        users: state[user.NAME],
     };
 };
 
-export default connect(mapStateToProps)(App);
+export default (connect(mapStateToProps)(App): any);

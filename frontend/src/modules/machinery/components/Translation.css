@@ -1,5 +1,5 @@
 .machinery .translation {
-    border-bottom: 1px solid #5E6475;
+    border-bottom: 1px solid #5e6475;
     cursor: pointer;
     padding: 10px;
 }
@@ -8,18 +8,22 @@
     pointer-events: none;
 }
 
-.machinery .translation:not(.cannot-copy):hover {
-    background: #4D5967;
+.machinery .translation.cannot-copy .sources.projects {
+    pointer-events: auto;
+}
+
+.machinery .translation:not(.cannot-copy):hover,
+.machinery .translation.selected {
+    background: #333941;
 }
 
 .machinery .translation > header {
-    color: #AAAAAA;
+    color: #aaaaaa;
     display: block;
     font-size: 11px;
     font-weight: 300;
     padding: 1px 0 5px;
     text-align: right;
-    text-transform: uppercase;
 }
 
 .machinery .translation > header ul {
@@ -27,28 +31,35 @@
 }
 
 .machinery .translation > header ul li {
-    display: inline-block;
+    display: inline;
     padding-left: 3px;
 }
 
-.machinery .translation > header a{
+.machinery .translation > header a {
     pointer-events: auto;
 }
 
 .machinery .translation > header ul li:not(:first-child)::before {
-    content: "•";
+    content: '•';
     padding-right: 3px;
 }
 
 .machinery .translation > header .quality::after {
-    content: "•";
-    color: #AAAAAA;
+    content: '•';
+    color: #aaaaaa;
     padding-left: 3px;
 }
 
 .machinery .translation > header .quality,
 .machinery .translation > header sup {
-    color: #7BC876;
+    color: #7bc876;
+}
+
+.machinery .translation > header .projects {
+    max-width: calc(100% - 10px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .machinery .translation p {
@@ -58,5 +69,5 @@
 }
 
 .machinery .translation p.original {
-    color: #AAAAAA;
+    color: #aaaaaa;
 }

@@ -7,7 +7,6 @@ import 'intl-pluralrules';
 
 import * as l10n from 'core/l10n';
 
-
 type Props = {|
     l10n: l10n.L10nState,
 |};
@@ -17,7 +16,6 @@ type InternalProps = {|
     children: React.Node,
     dispatch: Function,
 |};
-
 
 /**
  * Localization provider for this application.
@@ -38,21 +36,22 @@ export class AppLocalizationProviderBase extends React.Component<InternalProps> 
         // We use the `<html lang="">` attribute in the index.html file
         // to pass the user defined locale if there is one.
         if (document.documentElement && document.documentElement.lang) {
-            locales = [ document.documentElement.lang ];
+            locales = [document.documentElement.lang];
         }
 
         this.props.dispatch(l10n.actions.get(locales));
     }
 
-    render() {
+    render(): React.Element<React.ElementType> {
         const { children, l10n } = this.props;
 
-        return <LocalizationProvider l10n={ l10n.localization }>
-            { children }
-        </LocalizationProvider>;
+        return (
+            <LocalizationProvider l10n={l10n.localization}>
+                {children}
+            </LocalizationProvider>
+        );
     }
 }
-
 
 const mapStateToProps = (state: Object): Props => {
     return {
@@ -60,4 +59,4 @@ const mapStateToProps = (state: Object): Props => {
     };
 };
 
-export default connect(mapStateToProps)(AppLocalizationProviderBase);
+export default (connect(mapStateToProps)(AppLocalizationProviderBase): any);

@@ -38,19 +38,18 @@ class CreateTranslationForm(forms.Form):
         try:
             return Entity.objects.get(pk=self.cleaned_data["entity"])
         except Entity.DoesNotExist:
-            raise forms.ValidationError(
-                "Entity `{0}` could not be found".format(self.entity)
-            )
+            raise forms.ValidationError(f"Entity `{self.entity}` could not be found")
 
     def clean_locale(self):
         try:
             return Locale.objects.get(code=self.cleaned_data["locale"])
         except Locale.DoesNotExist:
-            raise forms.ValidationError(
-                "Locale `{0}` could not be found".format(self.entity)
-            )
+            raise forms.ValidationError(f"Locale `{self.entity}` could not be found")
 
     def clean_plural_form(self):
         if self.cleaned_data["plural_form"] == "-1":
             return None
         return self.cleaned_data["plural_form"]
+
+    def clean_translation(self):
+        return self.data.get("translation", "")

@@ -3,7 +3,6 @@
 import * as React from 'react';
 import { Localized } from '@fluent/react';
 
-
 /**
  * Marks Python formatting named variables.
  *
@@ -13,16 +12,18 @@ import { Localized } from '@fluent/react';
  *   %(number)D
  */
 const pythonFormatNamedString = {
-    rule: /(%\([[\w\d!.,[\]%:$<>+\-= ]*\)[+|-|0\d+|#]?[.\d+]?[s|d|e|f|g|o|x|c|%])/i,
-    tag: (x: string) => {
-        return <Localized
-            id='placeable-parser-pythonFormatNamedString'
-            attrs={{ title: true }}
-        >
-            <mark className='placeable' title='Python format string'>
-                { x }
-            </mark>
-        </Localized>;
+    rule: (/(%\([[\w\d!.,[\]%:$<>+\-= ]*\)[+|-|0\d+|#]?[.\d+]?[s|d|e|f|g|o|x|c|%])/i: RegExp),
+    tag: (x: string): React.Element<React.ElementType> => {
+        return (
+            <Localized
+                id='placeable-parser-pythonFormatNamedString'
+                attrs={{ title: true }}
+            >
+                <mark className='placeable' title='Python format string'>
+                    {x}
+                </mark>
+            </Localized>
+        );
     },
 };
 

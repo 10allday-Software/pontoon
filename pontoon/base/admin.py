@@ -1,14 +1,9 @@
-from __future__ import absolute_import
-
 import uuid
 
 from django.contrib import admin
 from django.contrib.auth import get_user_model
-from django.contrib.auth.admin import (
-    UserAdmin as AuthUserAdmin,
-    GroupAdmin,
-)
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.admin import UserAdmin as AuthUserAdmin
+from django.contrib.auth.models import User
 from django.forms.models import ModelForm
 from django.forms import ChoiceField
 from django.urls import reverse
@@ -45,11 +40,21 @@ class UserAdmin(AuthUserAdmin):
     list_filter = ("is_staff", "is_superuser")
     inlines = (UserProfileInline,)
 
+    add_fieldsets = (
+        (
+            None,
+            {
+                "classes": "wide",
+                "fields": ("username", "email", "password1", "password2"),
+            },
+        ),
+    )
+
     def save_model(self, request, obj, form, change):
         """
         Save a user and log changes in its roles.
         """
-        super(UserAdmin, self).save_model(request, obj, form, change)
+        super().save_model(request, obj, form, change)
 
         # Users can only be moved between groups upon editing, not creation
         if "groups" in form.cleaned_data:
@@ -96,7 +101,7 @@ class UserAdmin(AuthUserAdmin):
         Term.objects.filter(created_by=obj).update(created_by=new_user)
         models.Comment.objects.filter(author=obj).update(author=new_user)
 
-        super(UserAdmin, self).delete_model(request, obj)
+        super().delete_model(request, obj)
 
     # This method is to override bulk delete method from the user list page
     def delete_queryset(self, request, queryset):
@@ -139,10 +144,10 @@ class LocaleAdminForm(ModelForm):
         with connection.cursor() as cursor:
             cursor.execute("SELECT collname, collcollate  FROM pg_collation")
             rows = cursor.fetchall()
-            return ((name, "{} ({})".format(name, collate)) for name, collate in rows)
+            return ((name, f"{name} ({collate})") for name, collate in rows)
 
     def __init__(self, *args, **kwargs):
-        super(LocaleAdminForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields["db_collation"].choices = self.db_collations_choices
         self.fields["db_collation"].help_text = self._meta.model._meta.get_field(
             "db_collation"
@@ -277,6 +282,12 @@ class ProjectAdmin(admin.ModelAdmin):
     )
 
 
+class ProjectLocaleAdmin(admin.ModelAdmin):
+    search_fields = ["project__name", "project__slug", "locale__name", "locale__code"]
+    list_display = ("pk", "project", "locale", "readonly")
+    ordering = ("-pk",)
+
+
 class ResourceAdmin(admin.ModelAdmin):
     search_fields = ["path", "format", "project__name", "project__slug"]
     list_display = ("pk", "project", "path", "format", "deadline")
@@ -358,10 +369,11 @@ class UserRoleLogActionAdmin(admin.ModelAdmin):
     performed_by_email.allow_tags = True
 
 
+admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
-admin.site.register(Group, GroupAdmin)
 admin.site.register(models.Locale, LocaleAdmin)
 admin.site.register(models.Project, ProjectAdmin)
+admin.site.register(models.ProjectLocale, ProjectLocaleAdmin)
 admin.site.register(models.Resource, ResourceAdmin)
 admin.site.register(models.TranslatedResource, TranslatedResourceAdmin)
 admin.site.register(models.Entity, EntityAdmin)

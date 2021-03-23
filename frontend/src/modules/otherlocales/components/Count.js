@@ -4,42 +4,42 @@ import * as React from 'react';
 
 import type { LocalesState } from 'modules/otherlocales';
 
-
 type Props = {|
     otherlocales: LocalesState,
 |};
 
-
-export default function Count(props: Props) {
+export default function Count(props: Props): null | React.Element<'span'> {
     const { otherlocales } = props;
 
     if (otherlocales.fetching || !otherlocales.translations) {
         return null;
     }
 
-    const otherlocalesCount = otherlocales.translations.other.length;
-    const preferredLocalesCount = otherlocales.translations.preferred.length;
-
-    if (!otherlocalesCount && !preferredLocalesCount) {
+    const totalCount = otherlocales.translations.length;
+    if (!totalCount) {
         return null;
     }
 
-    const preferred = (
-        !preferredLocalesCount ? null :
-        <span className='preferred'>{ preferredLocalesCount }</span>
+    const preferredLocalesCount = otherlocales.translations.reduce(
+        (count, locale) => count + (locale.is_preferred ? 1 : 0),
+        0,
     );
-    const other = (
-        !otherlocalesCount ? null :
-        <span>{ otherlocalesCount }</span>
-    );
-    const plus = (
-        !otherlocalesCount || !preferredLocalesCount ? null :
-        <span>{ '+' }</span>
-    );
+    const otherlocalesCount = totalCount - preferredLocalesCount;
 
-    return <span className='count'>
-        { preferred }
-        { plus }
-        { other }
-    </span>;
+    const preferred = !preferredLocalesCount ? null : (
+        <span className='preferred'>{preferredLocalesCount}</span>
+    );
+    const other = !otherlocalesCount ? null : <span>{otherlocalesCount}</span>;
+    const plus =
+        !otherlocalesCount || !preferredLocalesCount ? null : (
+            <span>{'+'}</span>
+        );
+
+    return (
+        <span className='count'>
+            {preferred}
+            {plus}
+            {other}
+        </span>
+    );
 }

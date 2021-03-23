@@ -9,16 +9,14 @@ import Property from './Property';
 
 import type { Entity } from 'core/api';
 
-
 type Props = {|
     +entity: Entity,
 |};
 
-
 /**
  * Get attribute of a simple single-attribute Fluent message.
  */
-export default function FluentAttribute(props: Props) {
+export default function FluentAttribute(props: Props): null | React.Node {
     const { entity } = props;
 
     if (entity.format !== 'ftl') {
@@ -31,9 +29,14 @@ export default function FluentAttribute(props: Props) {
         return null;
     }
 
-    return <Localized id='entitydetails-Metadata--attribute' attrs={ { title: true } }>
-        <Property title='Attribute' className='attribute'>
-            { message.attributes[0].id.name }
-        </Property>
-    </Localized>;
+    return (
+        <Localized
+            id='entitydetails-Metadata--attribute'
+            attrs={{ title: true }}
+        >
+            <Property title='Attribute' className='attribute'>
+                {message.attributes[0].id.name}
+            </Property>
+        </Localized>
+    );
 }

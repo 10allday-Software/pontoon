@@ -2,14 +2,13 @@
 
 import isSimpleElement from './isSimpleElement';
 
-
 /**
  * Return true when message represents a simple message.
  *
  * A simple message has no attributes and all value
  * elements are simple.
  */
-export default function isSimpleMessage(message: Object) {
+export default function isSimpleMessage(message: Object): boolean {
     if (
         message &&
         message.attributes &&
